@@ -563,7 +563,7 @@
         }
 
         // ==========================================
-        // 5. モーダル制御 & 保存処理（軽量化・エラー保護版）
+        // 5. モーダル制御 & 保存処理（エラー詳細表示対応版）
         // ==========================================
         function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); }
         function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); }
@@ -627,10 +627,11 @@
                     if (existing && existing.imageUrl) imageUrl = existing.imageUrl;
                 }
 
-                // 画像がある場合はサイズを400px以下に強力に圧縮してBase64化
+                // 画像がある場合は最大250px・画質0.4に圧縮
                 if (imageFile) {
-                    const resizedBlob = await resizeImage(imageFile, 400, 400, 0.5);
+                    const resizedBlob = await resizeImage(imageFile, 250, 250, 0.4);
                     imageUrl = await convertBlobToBase64(resizedBlob);
+                    console.log('圧縮後 Base64文字数:', imageUrl.length);
                 }
 
                 const shopData = {
@@ -649,8 +650,8 @@
 
                 closeModal();
             } catch (e) {
-                console.error(e);
-                alert('保存に失敗しました。画像サイズが大きすぎるか、ネットワークエラーの可能性があります。');
+                console.error('詳細エラー:', e);
+                alert('保存に失敗しました。\nエラー内容: ' + (e.message || e));
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.textContent = '保存する';
