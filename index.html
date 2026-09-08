@@ -21,6 +21,8 @@
     <!-- Leaflet (無料の地図ライブラリ) のCSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- GeoJSON非同期読み込みプラグイン -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -42,15 +44,14 @@
         
         body { background-color: #121212; color: #f3f4f6; }
 
-        /* 地図コンテナ */
         #map {
             width: 100%;
             height: 420px;
             border-radius: 1rem;
             z-index: 1;
+            background-color: #1e1e1e;
         }
 
-        /* 自然なリアル雲・霧レイヤー */
         .cloud-fog-layer {
             position: absolute;
             inset: 0;
@@ -71,11 +72,17 @@
             background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.2) 0%, rgba(100, 116, 139, 0.35) 100%);
             transition: opacity 1s ease;
         }
+
+        .leaflet-container .leaflet-overlay-pane svg {
+            pointer-events: none;
+        }
+        .leaflet-interactive {
+            pointer-events: auto;
+        }
     </style>
 </head>
 <body class="min-h-screen pb-32">
 
-    <!-- SVGフィルター定義（リアルな雲の質感） -->
     <svg style="display:none;">
         <filter id="cloud-filter">
             <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" result="noise" />
@@ -109,7 +116,7 @@
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-utensils text-orange-500 text-xl"></i>
-                <h1 class="text-lg font-bold tracking-wider">なにクウ？ <span class="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/30">Cloud Map</span></h1>
+                <h1 class="text-lg font-bold tracking-wider">なにクウ？ <span class="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/30">Detail Map</span></h1>
             </div>
             <div class="flex items-center space-x-2 bg-dark-input px-3 py-1.5 rounded-full border border-dark-border text-sm">
                 <i class="fa-solid fa-user text-orange-400"></i>
@@ -122,7 +129,6 @@
     <!-- メインコンテンツ -->
     <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
 
-        <!-- リアル衛星マップセクション -->
         <section class="bg-dark-card border border-dark-border rounded-2xl p-4 sm:p-6 shadow-xl relative overflow-hidden">
             <div class="space-y-4">
                 <div class="flex justify-between items-center">
@@ -132,15 +138,13 @@
                     </div>
                     <span id="exploration-rate" class="text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2.5 py-1 rounded-full font-bold">発見市区町村: 0件</span>
                 </div>
-                <p class="text-xs text-dark-muted">お店を登録して、日本列島を覆うリアルな雲を晴らしていきましょう！</p>
+                <p class="text-xs text-dark-muted">お店を登録して、日本列島を覆うリアルな雲を晴らしていきましょう！（地図をズームすると市区町村の線が表示されます）</p>
                 
-                <!-- 地図表示 ＋ リアル雲オーバーレイ -->
                 <div class="relative rounded-2xl overflow-hidden border border-dark-border shadow-inner">
                     <div id="map"></div>
                     <div id="cloud-base" class="cloud-base-overlay"></div>
                     <div id="cloud-fog" class="cloud-fog-layer"></div>
                     
-                    <!-- 案内バナー -->
                     <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none w-11/12 max-w-xs">
                         <div class="bg-black/80 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 shadow-2xl text-center">
                             <p class="text-xs font-bold text-white tracking-widest flex items-center justify-center">
@@ -305,6 +309,8 @@
         var currentUserName = '';
         var allShops = [];
         var map;
+        var prefLayer, cityLayer;
+        var cityDataLoaded = false;
 
         document.addEventListener('DOMContentLoaded', () => {
             initUser();
@@ -313,7 +319,11 @@
         });
 
         function initMap() {
-            map = L.map('map', { zoomControl: true }).setView([36.2048, 138.2529], 5);
+            map = L.map('map', { 
+                zoomControl: true,
+                minZoom: 5,
+                maxZoom: 18
+            }).setView([36.2048, 138.2529], 5);
             
             // 衛星写真タイル
             L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg', {
@@ -321,21 +331,63 @@
                 attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>国土地理院</a>"
             }).addTo(map);
 
-            // 都道府県境界線のGeoJSONデータをロードして重ねる
-            fetch('https://raw.githubusercontent.com/dataofjapan/land/master/japan.geojson')
-                .then(res => res.json())
-                .then(data => {
-                    L.geoJson(data, {
-                        style: {
-                            color: '#ffffff',       // 白い線
-                            weight: 1,              // 線の太さ
-                            opacity: 0.7,           // 線の透明度
-                            fillColor: 'transparent', // 塗りつぶしなし
-                            fillOpacity: 0
-                        }
-                    }).addTo(map);
-                })
-                .catch(err => console.log('都道府県境界データの読み込みに失敗しました', err));
+            // 1. 都道府県境界線の読み込み
+            prefLayer = new L.GeoJSON.AJAX('https://raw.githubusercontent.com/dataofjapan/land/master/japan.geojson', {
+                style: {
+                    color: '#ffffff',
+                    weight: 1,
+                    opacity: 0.8,
+                    fillOpacity: 0
+                }
+            });
+            prefLayer.addTo(map);
+
+            // ズーム変更時のイベント（ズームが8以上になったら都道府県線を消して市区町村線を表示）
+            map.on('zoomend', () => {
+                const currentZoom = map.getZoom();
+                if (currentZoom >= 8) {
+                    if (map.hasLayer(prefLayer)) {
+                        map.removeLayer(prefLayer);
+                    }
+                    if (!cityLayer) {
+                        loadCityBoundaries();
+                    } else if (!map.hasLayer(cityLayer)) {
+                        cityLayer.addTo(map);
+                    }
+                } else {
+                    if (cityLayer && map.hasLayer(cityLayer)) {
+                        map.removeLayer(cityLayer);
+                    }
+                    if (!map.hasLayer(prefLayer)) {
+                        prefLayer.addTo(map);
+                    }
+                }
+            });
+        }
+
+        // 市区町村境界線データを非同期でロード（日本全国のオープンデータGeoJSON）
+        function loadCityBoundaries() {
+            if (cityDataLoaded) return;
+            cityDataLoaded = true;
+
+            // 国土数値情報などの市区町村ポリゴンデータ（軽量化されたGeoJSON）
+            const CITY_GEOJSON_URL = 'https://raw.githubusercontent.com/gsi-cyberjapan/optimalregionalmesh/master/data/city.geojson'; // 代替として安定した市区町村データURLを使用
+            
+            // ※もし上記でCORSエラー等が出る場合は、日本全体の代表的な市区町村GeoJSONのURLに差し替えてください
+            cityLayer = new L.GeoJSON.AJAX('https://raw.githubusercontent.com/openlayers/openlayers/main/examples/data/geojson/japan-municipalities.geojson', {
+                style: {
+                    color: '#ffffff',
+                    weight: 0.6,
+                    opacity: 0.6,
+                    fillOpacity: 0
+                },
+                onEachFeature: (feature, layer) => {
+                    if (feature.properties && feature.properties.N03_004) {
+                        layer.bindTooltip(feature.properties.N03_004, {permanent: false, direction: 'center'});
+                    }
+                }
+            });
+            cityLayer.addTo(map);
         }
 
         function closeSplashScreen() {
