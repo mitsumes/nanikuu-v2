@@ -11,14 +11,7 @@
             theme: {
                 extend: {
                     colors: {
-                        dark: {
-                            bg: '#121212',
-                            card: '#1e1e1e',
-                            input: '#2d2d2d',
-                            border: '#3f3f46',
-                            text: '#f3f4f6',
-                            muted: '#9ca3af'
-                        }
+                        dark: { bg: '#121212', card: '#1e1e1e', input: '#2d2d2d', border: '#3f3f46', text: '#f3f4f6', muted: '#9ca3af' }
                     }
                 }
             }
@@ -44,9 +37,7 @@
         .anim-icon { animation: floatIcon 1.5s ease-in-out infinite; }
         .anim-start-btn { animation: pulseBtn 2s ease-in-out infinite; }
         body { background-color: #121212; color: #f3f4f6; }
-        .fog-pattern {
-            background: repeating-linear-gradient(45deg, #1e293b, #1e293b 10px, #0f172a 10px, #0f172a 20px);
-        }
+        .foggy-region { background: repeating-linear-gradient(45deg, #27272a, #27272a 8px, #18181b 8px, #18181b 16px); }
     </style>
 </head>
 <body class="min-h-screen pb-32">
@@ -61,7 +52,7 @@
                 <h1 class="text-3xl font-black tracking-widest text-white anim-title">なにクウ？</h1>
                 <p class="text-xs text-orange-400 font-bold tracking-wider uppercase border-t border-b border-orange-500/30 py-1 inline-block px-4">- 日本全国 市区町村開拓手帳 -</p>
             </div>
-            <p class="text-xs text-dark-muted">都道府県をタップして、各地域の市区町村の霧を晴らそう！</p>
+            <p class="text-xs text-dark-muted">リアルな日本地図をタップして開拓を始めよう！</p>
             <div class="pt-6">
                 <button onclick="closeSplashScreen()" class="anim-start-btn group bg-gradient-to-b from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white w-28 h-28 rounded-full shadow-2xl flex flex-col items-center justify-center border-4 border-amber-300/60 transition transform active:scale-95 cursor-pointer">
                     <i class="fa-solid fa-bowl-food text-3xl mb-1 text-amber-100"></i>
@@ -76,7 +67,7 @@
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-utensils text-orange-500 text-xl"></i>
-                <h1 class="text-lg font-bold tracking-wider">なにクウ？ <span class="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/30">Japan Edition</span></h1>
+                <h1 class="text-lg font-bold tracking-wider">なにクウ？ <span class="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/30">Japan Map</span></h1>
             </div>
             <div class="flex items-center space-x-2 bg-dark-input px-3 py-1.5 rounded-full border border-dark-border text-sm">
                 <i class="fa-solid fa-user text-orange-400"></i>
@@ -89,21 +80,115 @@
     <!-- メインコンテンツ -->
     <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
 
-        <!-- 日本地図・都道府県フォグオブウォーセクション -->
-        <section class="bg-dark-card border border-dark-border rounded-2xl p-5 shadow-xl relative overflow-hidden">
+        <!-- 日本地図セクション -->
+        <section class="bg-dark-card border border-dark-border rounded-2xl p-4 sm:p-6 shadow-xl relative overflow-hidden">
             <div class="space-y-4">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center space-x-2">
-                        <i class="fa-solid fa-map-location-dot text-orange-400 text-lg"></i>
-                        <h2 class="font-bold text-base text-white">日本地図 開拓ゲーム</h2>
+                        <i class="fa-solid fa-map text-orange-400 text-lg"></i>
+                        <h2 class="font-bold text-base text-white">日本列島 開拓マップ</h2>
                     </div>
-                    <span id="exploration-rate" class="text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2.5 py-1 rounded-full font-bold">発見市区町村: 0件</span>
+                    <span id="exploration-rate" class="text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2.5 py-1 rounded-full font-bold">発見: 0件</span>
                 </div>
-                <p class="text-xs text-dark-muted">都道府県をタップすると、その県内の市町村ごとの「霧の晴れ具合」を確認できます。未投稿の地域の霧は晴れません！</p>
+                <p class="text-xs text-dark-muted">地方または都道府県をタップすると、その地域にズームインして市区町村の霧の晴れ具合を確認できます。</p>
                 
-                <!-- 地方別セレクター -->
-                <div class="space-y-3 pt-2" id="region-container">
-                    <!-- 動的に地方・都道府県ボタンが生成されます -->
+                <!-- ビジュアル日本地図エリア（地方ごとの配置マップ） -->
+                <div id="japan-map-view" class="bg-dark-input/60 border border-dark-border rounded-xl p-4 relative min-h-[320px] flex flex-col justify-between">
+                    <div class="text-center text-xs text-orange-400 font-bold tracking-widest mb-2">- 地方選択マップ -</div>
+                    
+                    <!-- 北海道・東北 -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <div onclick="openPrefList('北海道')" id="map-btn-北海道" class="p-3 rounded-xl border border-dark-border text-center cursor-pointer transition hover:border-orange-400 foggy-region">
+                            <div class="text-xs font-bold">北海道</div>
+                            <div class="text-[10px] text-dark-muted mt-1">未開拓</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-1">
+                            <div onclick="openPrefList('青森県')" id="map-btn-青森県" class="p-2 rounded-lg border border-dark-border text-center cursor-pointer transition hover:border-orange-400 text-[11px] foggy-region font-bold">青森</div>
+                            <div onclick="openPrefList('岩手県')" id="map-btn-岩手県" class="p-2 rounded-lg border border-dark-border text-center cursor-pointer transition hover:border-orange-400 text-[11px] foggy-region font-bold">岩手</div>
+                            <div onclick="openPrefList('宮城県')" id="map-btn-宮城県" class="p-2 rounded-lg border border-dark-border text-center cursor-pointer transition hover:border-orange-400 text-[11px] foggy-region font-bold">宮城</div>
+                            <div onclick="openPrefList('秋田県')" id="map-btn-秋田県" class="p-2 rounded-lg border border-dark-border text-center cursor-pointer transition hover:border-orange-400 text-[11px] foggy-region font-bold">秋田</div>
+                            <div onclick="openPrefList('山形県')" id="map-btn-山形県" class="p-2 rounded-lg border border-dark-border text-center cursor-pointer transition hover:border-orange-400 text-[11px] foggy-region font-bold">山形</div>
+                            <div onclick="openPrefList('福島県')" id="map-btn-福島県" class="p-2 rounded-lg border border-dark-border text-center cursor-pointer transition hover:border-orange-400 text-[11px] foggy-region font-bold">福島</div>
+                        </div>
+                    </div>
+
+                    <!-- 関東・中部・近畿エリアグリッド -->
+                    <div class="grid grid-cols-3 gap-2 my-2">
+                        <!-- 関東 -->
+                        <div class="bg-dark-card/40 border border-dark-border/60 rounded-xl p-2 space-y-1">
+                            <div class="text-[10px] font-bold text-orange-400 text-center">関東</div>
+                            <div class="grid grid-cols-2 gap-1 text-[10px]">
+                                <div onclick="openPrefList('茨城県')" id="map-btn-茨城県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">茨城</div>
+                                <div onclick="openPrefList('栃木県')" id="map-btn-栃木県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">栃木</div>
+                                <div onclick="openPrefList('群馬県')" id="map-btn-群馬県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">群馬</div>
+                                <div onclick="openPrefList('埼玉県')" id="map-btn-埼玉県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">埼玉</div>
+                                <div onclick="openPrefList('千葉県')" id="map-btn-千葉県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">千葉</div>
+                                <div onclick="openPrefList('東京都')" id="map-btn-東京都" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region font-bold text-orange-300">東京</div>
+                                <div onclick="openPrefList('神奈川県')" id="map-btn-神奈川県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region col-span-2">神奈川</div>
+                            </div>
+                        </div>
+                        <!-- 中部 -->
+                        <div class="bg-dark-card/40 border border-dark-border/60 rounded-xl p-2 space-y-1">
+                            <div class="text-[10px] font-bold text-orange-400 text-center">中部</div>
+                            <div class="grid grid-cols-3 gap-1 text-[10px]">
+                                <div onclick="openPrefList('新潟県')" id="map-btn-新潟県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">新潟</div>
+                                <div onclick="openPrefList('富山県')" id="map-btn-富山県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">富山</div>
+                                <div onclick="openPrefList('石川県')" id="map-btn-石川県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">石川</div>
+                                <div onclick="openPrefList('福井県')" id="map-btn-福井県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">福井</div>
+                                <div onclick="openPrefList('山梨県')" id="map-btn-山梨県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">山梨</div>
+                                <div onclick="openPrefList('長野県')" id="map-btn-長野県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">長野</div>
+                                <div onclick="openPrefList('岐阜県')" id="map-btn-岐阜県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">岐阜</div>
+                                <div onclick="openPrefList('静岡県')" id="map-btn-静岡県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">静岡</div>
+                                <div onclick="openPrefList('愛知県')" id="map-btn-愛知県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">愛知</div>
+                            </div>
+                        </div>
+                        <!-- 近畿 -->
+                        <div class="bg-dark-card/40 border border-dark-border/60 rounded-xl p-2 space-y-1">
+                            <div class="text-[10px] font-bold text-orange-400 text-center">近畿</div>
+                            <div class="grid grid-cols-2 gap-1 text-[10px]">
+                                <div onclick="openPrefList('三重県')" id="map-btn-三重県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">三重</div>
+                                <div onclick="openPrefList('滋賀県')" id="map-btn-滋賀県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">滋賀</div>
+                                <div onclick="openPrefList('京都府')" id="map-btn-京都府" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">京都</div>
+                                <div onclick="openPrefList('大阪府')" id="map-btn-大阪府" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">大阪</div>
+                                <div onclick="openPrefList('兵庫県')" id="map-btn-兵庫県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">兵庫</div>
+                                <div onclick="openPrefList('奈良県')" id="map-btn-奈良県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">奈良</div>
+                                <div onclick="openPrefList('和歌山県')" id="map-btn-和歌山県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region col-span-2">和歌山</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 中国・四国・九州沖縄 -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <!-- 中国・四国 -->
+                        <div class="bg-dark-card/40 border border-dark-border/60 rounded-xl p-2 space-y-1">
+                            <div class="text-[10px] font-bold text-orange-400 text-center">中国・四国</div>
+                            <div class="grid grid-cols-3 gap-1 text-[10px]">
+                                <div onclick="openPrefList('鳥取県')" id="map-btn-鳥取県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">鳥取</div>
+                                <div onclick="openPrefList('島根県')" id="map-btn-島根県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">島根</div>
+                                <div onclick="openPrefList('岡山県')" id="map-btn-岡山県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">岡山</div>
+                                <div onclick="openPrefList('広島県')" id="map-btn-広島県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">広島</div>
+                                <div onclick="openPrefList('山口県')" id="map-btn-山口県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">山口</div>
+                                <div onclick="openPrefList('徳島県')" id="map-btn-徳島県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">徳島</div>
+                                <div onclick="openPrefList('香川県')" id="map-btn-香川県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">香川</div>
+                                <div onclick="openPrefList('愛媛県')" id="map-btn-愛媛県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">愛媛</div>
+                                <div onclick="openPrefList('高知県')" id="map-btn-高知県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">高知</div>
+                            </div>
+                        </div>
+                        <!-- 九州・沖縄 -->
+                        <div class="bg-dark-card/40 border border-dark-border/60 rounded-xl p-2 space-y-1">
+                            <div class="text-[10px] font-bold text-orange-400 text-center">九州・沖縄</div>
+                            <div class="grid grid-cols-3 gap-1 text-[10px]">
+                                <div onclick="openPrefList('福岡県')" id="map-btn-福岡県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">福岡</div>
+                                <div onclick="openPrefList('佐賀県')" id="map-btn-佐賀県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">佐賀</div>
+                                <div onclick="openPrefList('長崎県')" id="map-btn-長崎県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">長崎</div>
+                                <div onclick="openPrefList('熊本県')" id="map-btn-熊本県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">熊本</div>
+                                <div onclick="openPrefList('大分県')" id="map-btn-大分県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">大分</div>
+                                <div onclick="openPrefList('宮崎県')" id="map-btn-宮崎県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">宮崎</div>
+                                <div onclick="openPrefList('鹿児島県')" id="map-btn-鹿児島県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region col-span-2">鹿児島</div>
+                                <div onclick="openPrefList('沖縄県')" id="map-btn-沖縄県" class="p-1 rounded bg-dark-input text-center cursor-pointer foggy-region">沖縄</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -146,18 +231,22 @@
         </div>
     </nav>
 
-    <!-- 都道府県詳細（市町村の霧状況）モーダル -->
-    <div id="pref-detail-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-dark-card w-full max-w-md rounded-2xl border border-dark-border shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+    <!-- 都道府県をタップした際の拡大（市区町村マップ）モーダル -->
+    <div id="pref-detail-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-dark-card w-full max-w-lg rounded-2xl border border-dark-border shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
             <div class="p-4 border-b border-dark-border flex justify-between items-center bg-dark-input">
-                <h3 id="modal-pref-title" class="font-bold text-base text-orange-400">都道府県詳細</h3>
-                <button onclick="closePrefModal()" class="text-dark-muted hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <div>
+                    <span class="text-[10px] text-orange-400 font-bold uppercase tracking-widest block">都道府県 拡大マップ</span>
+                    <h3 id="modal-pref-title" class="font-bold text-lg text-white">東京都の市区町村</h3>
+                </div>
+                <button onclick="closePrefModal()" class="text-dark-muted hover:text-white p-1 text-lg"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="p-5 overflow-y-auto space-y-3 flex-1" id="pref-detail-content">
-                <!-- 市町村ごとの霧の晴れ具合リストが入ります -->
+            <div class="p-5 overflow-y-auto space-y-4 flex-1" id="pref-detail-content">
+                <!-- 市町村ごとの詳細カードが入ります -->
             </div>
-            <div class="p-4 border-t border-dark-border bg-dark-input flex justify-end">
-                <button onclick="closePrefModal()" class="px-5 py-2 rounded-lg text-sm bg-orange-500 hover:bg-orange-600 text-white font-bold transition">とじる</button>
+            <div class="p-4 border-t border-dark-border bg-dark-input flex justify-between items-center">
+                <span class="text-xs text-dark-muted" id="modal-pref-stats">開拓済み: 0市区町村</span>
+                <button onclick="closePrefModal()" class="px-5 py-2 rounded-lg text-sm bg-orange-500 hover:bg-orange-600 text-white font-bold transition">閉じる</button>
             </div>
         </div>
     </div>
@@ -211,7 +300,6 @@
                     <div>
                         <label class="block text-xs font-semibold text-dark-muted mb-1">都道府県 <span class="text-orange-500">*</span></label>
                         <select id="shop-pref" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
-                            <!-- 47都道府県 -->
                             <option value="北海道">北海道</option><option value="青森県">青森県</option><option value="岩手県">岩手県</option><option value="宮城県">宮城県</option><option value="秋田県">秋田県</option><option value="山形県">山形県</option><option value="福島県">福島県</option>
                             <option value="茨城県">茨城県</option><option value="栃木県">栃木県</option><option value="群馬県">群馬県</option><option value="埼玉県">埼玉県</option><option value="千葉県">千葉県</option><option value="東京都" selected>東京都</option><option value="神奈川県">神奈川県</option>
                             <option value="新潟県">新潟県</option><option value="富山県">富山県</option><option value="石川県">石川県</option><option value="福井県">福井県</option><option value="山梨県">山梨県</option><option value="長野県">長野県</option>
@@ -281,14 +369,13 @@
         var currentUserName = '';
         var allShops = [];
 
-        // 地方別の都道府県定義
-        const regionGroups = [
-            { region: "北海道・東北", prefs: ["北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県"] },
-            { region: "関東", prefs: ["茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県"] },
-            { region: "中部", prefs: ["新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県", "岐阜県", "静岡県", "愛知県"] },
-            { region: "近畿", prefs: ["三重県", "滋賀県", "京都府", "大阪府", "兵庫県", "奈良県", "和歌山県"] },
-            { region: "中国・四国", prefs: ["鳥取県", "島根県", "岡山県", "広島県", "山口県", "徳島県", "香川県", "愛媛県", "高知県"] },
-            { region: "九州・沖縄", prefs: ["福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"] }
+        const allPrefectures = [
+            "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
+            "茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県",
+            "新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県",
+            "三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県",
+            "鳥取県","島根県","岡山県","広島県","山口県","徳島県","香川県","愛媛県","高知県",
+            "福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"
         ];
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -338,16 +425,12 @@
                 allShops.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
                 document.getElementById('loading-spinner').classList.add('hidden');
                 filterShops();
-                renderRegionMap();
+                updateJapanMapFog();
             });
         }
 
-        // リアルな都道府県・地方ボードの描画（投稿された市区町村のみ霧が晴れる）
-        function renderRegionMap() {
-            const container = document.getElementById('region-container');
-            container.innerHTML = '';
-
-            // 投稿済みの市区町村マップを作成: pref -> Set(city)
+        // 日本地図上の都道府県の霧ステータスを更新
+        function updateJapanMapFog() {
             const prefClearedMap = {};
             allShops.forEach(shop => {
                 if (shop.pref && shop.city) {
@@ -360,86 +443,70 @@
             Object.values(prefClearedMap).forEach(set => totalClearedCities += set.size);
             document.getElementById('exploration-rate').textContent = `発見市区町村: ${totalClearedCities}件`;
 
-            regionGroups.forEach(group => {
-                const groupDiv = document.createElement('div');
-                groupDiv.className = "space-y-1.5";
-                
-                let groupHtml = `<div class="text-xs font-bold text-orange-400 mb-1">${group.region}</div><div class="grid grid-cols-2 sm:grid-cols-4 gap-2">`;
-                
-                group.prefs.forEach(pref => {
-                    const clearedSet = prefClearedMap[pref];
-                    const hasCleared = clearedSet && clearedSet.size > 0;
-                    const countText = hasCleared ? `${clearedSet.size}市区町村晴れ☀️` : '霧の中...';
-
-                    if (hasCleared) {
-                        // 晴れている都道府県ボタン
-                        groupHtml += `
-                            <button onclick="openPrefDetail('${pref}')" class="bg-gradient-to-br from-orange-500/20 to-amber-600/30 border border-orange-500/60 hover:border-orange-400 p-2 rounded-xl text-left transition flex flex-col justify-between shadow-sm cursor-pointer">
-                                <span class="text-xs font-bold text-white flex items-center justify-between">
-                                    <span>${pref}</span>
-                                    <i class="fa-solid fa-sun text-orange-400 text-[10px]"></i>
-                                </span>
-                                <span class="text-[10px] text-orange-300 mt-1">${countText}</span>
-                            </button>
-                        `;
-                    } else {
-                        // 霧に包まれている都道府県ボタン
-                        groupHtml += `
-                            <button onclick="openPrefDetail('${pref}')" class="fog-pattern border border-dark-border hover:border-dark-muted p-2 rounded-xl text-left transition flex flex-col justify-between opacity-80 cursor-pointer">
-                                <span class="text-xs font-bold text-dark-muted flex items-center justify-between">
-                                    <span>${pref}</span>
-                                    <i class="fa-solid fa-cloud text-dark-muted text-[10px]"></i>
-                                </span>
-                                <span class="text-[10px] text-dark-muted mt-1">未開拓 (タップで確認)</span>
-                            </button>
-                        `;
-                    }
-                });
-                groupHtml += `</div>`;
-                groupDiv.innerHTML = groupHtml;
-                container.appendChild(groupDiv);
+            allPrefectures.forEach(pref => {
+                const el = document.getElementById(`map-btn-${pref}`);
+                if (!el) return;
+                const clearedSet = prefClearedMap[pref];
+                if (clearedSet && clearedSet.size > 0) {
+                    el.classList.remove('foggy-region');
+                    el.style.background = 'linear-gradient(135deg, rgba(249, 115, 22, 0.25), rgba(217, 119, 6, 0.4))';
+                    el.style.borderColor = '#fb923c';
+                } else {
+                    el.classList.add('foggy-region');
+                    el.style.background = '';
+                    el.style.borderColor = '';
+                }
             });
         }
 
-        // 都道府県タップ時：その中の市区町村の霧状況をモーダル表示
-        function openPrefDetail(prefName) {
-            document.getElementById('modal-pref-title').textContent = `${prefName} の開拓状況`;
+        // 都道府県タップ：都道府県内の市区町村一覧（ズームイン画面）を表示
+        function openPrefList(prefName) {
+            document.getElementById('modal-pref-title').textContent = `${prefName} の市区町村`;
             const contentEl = document.getElementById('pref-detail-content');
             contentEl.innerHTML = '';
 
             const prefShops = allShops.filter(s => s.pref === prefName);
-            const clearedCityMap = {};
+            const cityMap = {};
             prefShops.forEach(s => {
                 if (s.city) {
                     const c = s.city.trim();
-                    if (!clearedCityMap[c]) clearedCityMap[c] = [];
-                    clearedCityMap[c].push(s);
+                    if (!cityMap[c]) cityMap[c] = [];
+                    cityMap[c].push(s);
                 }
             });
 
-            const clearedCities = Object.keys(clearedCityMap);
+            const clearedCities = Object.keys(cityMap);
+            document.getElementById('modal-pref-stats').textContent = `開拓済み市区町村: ${clearedCities.length}件`;
 
             if (clearedCities.length === 0) {
                 contentEl.innerHTML = `
-                    <div class="text-center py-8 space-y-2">
-                        <i class="fa-solid fa-cloud-moon text-3xl text-dark-muted"></i>
+                    <div class="text-center py-10 space-y-3 bg-dark-input/40 rounded-xl border border-dark-border">
+                        <i class="fa-solid fa-cloud-moon text-4xl text-dark-muted"></i>
                         <p class="text-sm font-bold text-white">${prefName}はまだ完全に霧に包まれています。</p>
-                        <p class="text-xs text-dark-muted">この地域の市区町村のお店を投稿して、霧を晴らそう！</p>
+                        <p class="text-xs text-dark-muted px-4">「お店を追加」からこの地域の店舗を登録すると、地図の霧が晴れて市区町村が表示されます！</p>
                     </div>
                 `;
             } else {
-                let html = `<p class="text-xs text-dark-muted mb-2">投稿により霧が晴れた市区町村 (${clearedCities.length}件):</p><div class="space-y-2">`;
+                let html = `<div class="space-y-3"><p class="text-xs text-dark-muted">霧が晴れた市区町村と登録店舗:</p>`;
                 clearedCities.forEach(city => {
-                    const shopsInCity = clearedCityMap[city];
+                    const shops = cityMap[city];
                     html += `
-                        <div class="bg-dark-input border border-orange-500/30 rounded-xl p-3 space-y-1">
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs font-bold text-orange-400"><i class="fa-solid fa-map-pin mr-1"></i>${city}</span>
-                                <span class="text-[10px] bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-full">晴れ☀️</span>
+                        <div class="bg-dark-input border border-orange-500/40 rounded-xl p-3 space-y-2">
+                            <div class="flex justify-between items-center border-b border-dark-border/60 pb-1.5">
+                                <span class="text-xs font-black text-orange-400 flex items-center"><i class="fa-solid fa-location-dot mr-1.5"></i>${city}</span>
+                                <span class="text-[10px] bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-full font-bold">晴れ☀️ (${shops.length}件)</span>
                             </div>
-                            <div class="text-[11px] text-dark-muted">登録店舗: ${shopsInCity.map(s => s.name).join(', ')}</div>
-                        </div>
+                            <div class="space-y-1">
                     `;
+                    shops.forEach(sh => {
+                        html += `
+                            <div class="text-xs text-gray-200 flex justify-between items-center bg-dark-card/60 p-2 rounded border border-dark-border">
+                                <span class="font-bold">${escapeHtml(sh.name)}</span>
+                                <span class="text-[10px] text-dark-muted">${sh.genre || ''}</span>
+                            </div>
+                        `;
+                    });
+                    html += `</div></div>`;
                 });
                 html += `</div>`;
                 contentEl.innerHTML = html;
