@@ -38,9 +38,40 @@
             0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(249, 115, 22, 0.4); }
             50% { transform: scale(1.05); box-shadow: 0 0 35px rgba(249, 115, 22, 0.7); }
         }
+        /* ピン刺しドロップアニメーション */
+        @keyframes dropPin {
+            0% { transform: translateY(-120px) scale(0.3) rotate(-45deg); opacity: 0; }
+            60% { transform: translateY(10px) scale(1.1) rotate(-45deg); opacity: 1; }
+            80% { transform: translateY(-5px) scale(0.95) rotate(-45deg); }
+            100% { transform: translateY(0) scale(1) rotate(-45deg); opacity: 1; }
+        }
+        /* 衝撃波アニメーション */
+        @keyframes shockwave {
+            0% { transform: scale(0.2); opacity: 1; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+
         .anim-title { animation: pulseGlow 2s ease-in-out infinite; }
         .anim-icon { animation: floatIcon 1.5s ease-in-out infinite; }
         .anim-start-btn { animation: pulseBtn 2s ease-in-out infinite; }
+        
+        .dropped-pin {
+            animation: dropPin 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        .pin-shockwave {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(249, 115, 22, 0.6);
+            transform: translate(-50%, -50%) scale(0.2);
+            animation: shockwave 0.8s ease-out forwards;
+            pointer-events: none;
+            z-index: 5;
+        }
         
         body { background-color: #121212; color: #f3f4f6; }
 
@@ -319,6 +350,7 @@
         var map;
         var prefLayer;
         var markersLayer = L.layerGroup();
+        var justAddedShopId = null; // アニメーション用フラグ
 
         const prefCoordinates = {
             "北海道": [43.064, 141.3469], "青森県": [40.8244, 140.74], "岩手県": [39.7036, 141.1527],
@@ -354,7 +386,8 @@
                     maxZoom: 18
                 }).setView([36.2048, 138.2529], 5);
                 
-                L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg', {
+                // 【画質改善】より高精細にくっきり見える国土地理院の空中写真（ort）タイルに変更
+                L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/ort/{z}/{x}/{y}.jpg', {
                     maxZoom: 18,
                     attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>国土地理院</a>"
                 }).addTo(map);
@@ -429,6 +462,17 @@
                 filterShops();
                 renderMarkers();
                 updateCloudHoles();
+
+                // 新規投稿・編集された場合のワクワク演出トリガー
+                if (justAddedShopId) {
+                    const targetShop = allShops.find(s => s.id === justAddedShopId);
+                    if (targetShop && targetShop.lat && targetShop.lng && map) {
+                        map.flyTo([targetShop.lat, targetShop.lng], 15, {
+                            duration: 1.5
+                        });
+                    }
+                    justAddedShopId = null;
+                }
             });
         }
 
@@ -437,12 +481,25 @@
             markersLayer.clearLayers();
             allShops.forEach(shop => {
                 if (shop.lat && shop.lng) {
+                    // 新規追加されたスポットにはドロップアニメーションと衝撃波をつける
+                    const isNew = (shop.id === justAddedShopId);
+                    const iconClass = isNew ? 'dropped-pin' : '';
+                    
+                    const pinHtml = `
+                        <div style="position: relative; width: 36px; height: 36px;">
+                            ${isNew ? '<div class="pin-shockwave"></div>' : ''}
+                            <div class="${iconClass}" style="background-color: #f97316; width: 28px; height: 28px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(249,115,22,0.8); border: 2px solid #fff; position: absolute; top: 4px; left: 4px;">
+                                <i class="fa-solid fa-utensils" style="transform: rotate(45deg); color: #fff; font-size: 12px;"></i>
+                            </div>
+                        </div>
+                    `;
+
                     const pinIcon = L.divIcon({
-                        className: 'custom-pin',
-                        html: `<div style="background-color: #f97316; width: 28px; height: 28px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 2px solid #fff;"><i class="fa-solid fa-utensils" style="transform: rotate(45deg); color: #fff; font-size: 12px;"></i></div>`,
-                        iconSize: [28, 28],
-                        iconAnchor: [14, 28],
-                        popupAnchor: [0, -28]
+                        className: 'custom-pin-animated',
+                        html: pinHtml,
+                        iconSize: [36, 36],
+                        iconAnchor: [18, 36],
+                        popupAnchor: [0, -36]
                     });
 
                     const fullAddr = `${shop.pref || ''}${shop.city || ''}${shop.address || ''} ${shop.building || ''}`;
@@ -672,10 +729,13 @@
 
                 const shopsRef = getDatabaseRef().ref('shops');
                 if (id) {
+                    justAddedShopId = id;
                     await shopsRef.child(id).update(shopData);
                 } else {
                     shopData.createdAt = firebase.database.ServerValue.TIMESTAMP;
-                    await shopsRef.push(shopData);
+                    const newRef = shopsRef.push();
+                    justAddedShopId = newRef.key;
+                    await newRef.set(shopData);
                 }
                 closeModal();
             } catch (e) {
