@@ -1,166 +1,628 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>なにクウ？ - グルメ共有 & 探索ゲーム</title>
+    <title>なにクウ？ ver2 (WEB版)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1p:wght@400;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#121212',
+                            card: '#1e1e1e',
+                            input: '#2d2d2d',
+                            border: '#3f3f46',
+                            text: '#f3f4f6',
+                            muted: '#9ca3af'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK (v8) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     <style>
-        body { font-family: 'M PLUS Rounded 1p', sans-serif; }
+        @keyframes slotSpin {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-100%); }
+        }
+        .slot-animation {
+            animation: slotSpin 0.1s linear infinite;
+        }
+        body {
+            background-color: #121212;
+            color: #f3f4f6;
+        }
     </style>
 </head>
-<body class="bg-amber-50 text-slate-800 min-h-screen pb-20">
+<body class="min-h-screen pb-20">
 
     <!-- ヘッダー -->
-    <header class="bg-amber-600 text-white p-4 shadow-md sticky top-0 z-50 flex justify-between items-center">
-        <h1 class="text-xl font-bold tracking-wider">🍴 なにクウ？</h1>
-        <div id="user-display" class="text-sm bg-amber-700 px-3 py-1 rounded-full"></div>
+    <header class="bg-dark-card border-b border-dark-border sticky top-0 z-40 shadow-md">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-utensils text-orange-500 text-xl"></i>
+                <h1 class="text-lg font-bold tracking-wider">なにクウ？ <span class="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/30">ver2 WEB</span></h1>
+            </div>
+            <!-- ユーザー名表示・変更エリア -->
+            <div class="flex items-center space-x-2 bg-dark-input px-3 py-1.5 rounded-full border border-dark-border text-sm">
+                <i class="fa-solid fa-user text-orange-400"></i>
+                <span id="display-username" class="font-medium max-w-[100px] truncate">ゲスト</span>
+                <button onclick="changeUsername()" class="text-dark-muted hover:text-white transition" title="名前を変更">
+                    <i class="fa-solid fa-pen text-xs"></i>
+                </button>
+            </div>
+        </div>
     </header>
 
     <!-- メインコンテンツ -->
-    <main class="max-w-md mx-auto p-4">
-        <!-- ホーム画面 -->
-        <div id="view-home" class="space-y-4">
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-amber-100 text-center">
-                <h2 class="text-lg font-bold text-amber-900 mb-2">ようこそ、なにクウへ！</h2>
-                <p class="text-sm text-slate-600 mb-4">みんなで美味しいお店をシェアして、マップを広げよう。</p>
-                <button onclick="switchView('post')" class="w-full bg-amber-600 text-white font-bold py-3 rounded-xl shadow hover:bg-amber-700 transition">お店を投稿する</button>
+    <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
+
+        <!-- アクションボタン＆検索バーエリア -->
+        <div class="bg-dark-card p-4 rounded-xl border border-dark-border shadow-sm space-y-4">
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button onclick="openAddModal()" class="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold py-2.5 px-4 rounded-lg shadow transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-plus-circle"></i>
+                    <span>お店を追加する</span>
+                </button>
+                <button onclick="openRouletteModal()" class="flex-1 bg-dark-input hover:bg-dark-border border border-orange-500/50 text-orange-400 font-bold py-2.5 px-4 rounded-lg transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-dice text-lg animate-bounce"></i>
+                    <span>今日のランチガチャ（ルーレット）</span>
+                </button>
             </div>
-            <!-- 投稿一覧エリア -->
-            <div class="space-y-3" id="post-list">
-                <p class="text-center text-slate-400 py-6">読み込み中...</p>
+
+            <!-- 検索・フィルター -->
+            <div class="pt-2 border-t border-dark-border grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-xs text-dark-muted mb-1">フリーワード検索</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-dark-muted">
+                            <i class="fa-solid fa-search"></i>
+                        </span>
+                        <input type="text" id="search-keyword" placeholder="店名・特徴など" oninput="filterShops()" class="w-full bg-dark-input border border-dark-border rounded-lg pl-9 pr-3 py-1.5 text-sm focus:outline-none focus:border-orange-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-dark-muted mb-1">ジャンル</label>
+                    <select id="filter-genre" onchange="filterShops()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-orange-500">
+                        <option value="">すべてのジャンル</option>
+                        <option value="和食">和食</option>
+                        <option value="洋食">洋食</option>
+                        <option value="中華">中華</option>
+                        <option value="ラーメン">ラーメン</option>
+                        <option value="焼肉・肉料理">焼肉・肉料理</option>
+                        <option value="居酒屋・バー">居酒屋・バー</option>
+                        <option value="カフェ・スイーツ">カフェ・スイーツ</option>
+                        <option value="エスニック・カレー">エスニック・カレー</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-dark-muted mb-1">都道府県</label>
+                    <select id="filter-pref" onchange="filterShops()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-orange-500">
+                        <option value="">すべての地域</option>
+                        <option value="北海道">北海道</option><option value="青森県">青森県</option><option value="岩手県">岩手県</option><option value="宮城県">宮城県</option><option value="秋田県">秋田県</option><option value="山形県">山形県</option><option value="福島県">福島県</option><option value="茨城県">茨城県</option><option value="栃木県">栃木県</option><option value="群馬県">群馬県</option><option value="埼玉県">埼玉県</option><option value="千葉県">千葉県</option><option value="東京都">東京都</option><option value="神奈川県">神奈川県</option><option value="新潟県">新潟県</option><option value="富山県">富山県</option><option value="石川県">石川県</option><option value="福井県">福井県</option><option value="山梨県">山梨県</option><option value="nagano">長野県</option><option value="岐阜県">岐阜県</option><option value="静岡県">静岡県</option><option value="愛知県">愛知県</option><option value="三重県">三重県</option><option value="滋賀県">滋賀県</option><option value="京都府">京都府</option><option value="大阪府">大阪府</option><option value="兵庫県">兵庫県</option><option value="奈良県">奈良県</option><option value="和歌山県">和歌山県</option><option value="鳥取県">鳥取県</option><option value="島根県">島根県</option><option value="岡山県">岡山県</option><option value="広島県">広島県</option><option value="山口県">山口県</option><option value="徳島県">徳島県</option><option value="香川県">香川県</option><option value="愛媛県">愛媛県</option><option value="高知県">高知県</option><option value="福岡県">福岡県</option><option value="佐賀県">佐賀県</option><option value="長崎県">長崎県</option><option value="熊本県">熊本県</option><option value="大分県">大分県</option><option value="宮崎県">宮崎県</option><option value="鹿児島県">鹿児島県</option><option value="沖縄県">沖縄県</option>
+                    </select>
+                </div>
             </div>
         </div>
 
-        <!-- 投稿画面 -->
-        <div id="view-post" class="hidden space-y-4">
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-amber-100">
-                <h2 class="text-lg font-bold text-amber-900 mb-4">お店を新しく登録</h2>
-                <form id="entry-form" onsubmit="handlePost(event)" class="space-y-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">店名</label>
-                        <input type="text" id="shop-name" required class="w-full border rounded-lg p-2 text-sm" placeholder="例: カフェ・ド・なにクウ">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">エリア・場所</label>
-                        <input type="text" id="shop-area" required class="w-full border rounded-lg p-2 text-sm" placeholder="例: 栄三丁目">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">ひとこと感想</label>
-                        <textarea id="shop-comment" rows="3" class="w-full border rounded-lg p-2 text-sm" placeholder="美味しかったメニューなど"></textarea>
-                    </div>
-                    <div class="flex gap-2 pt-2">
-                        <button type="button" onclick="switchView('home')" class="w-1/2 bg-slate-200 text-slate-700 font-bold py-2 rounded-xl">キャンセル</button>
-                        <button type="submit" class="w-1/2 bg-amber-600 text-white font-bold py-2 rounded-xl">投稿する</button>
-                    </div>
-                </form>
+        <!-- 飲食店リスト表示エリア -->
+        <div class="space-y-4">
+            <div class="flex justify-between items-center px-1">
+                <h2 class="text-sm font-bold text-dark-muted uppercase tracking-wider">登録されたお店 (<span id="shop-count">0</span>件)</h2>
+            </div>
+            
+            <!-- ローディング -->
+            <div id="loading-spinner" class="text-center py-12">
+                <i class="fa-solid fa-spinner fa-spin text-2xl text-orange-500"></i>
+                <p class="text-xs text-dark-muted mt-2">データを読み込んでいます...</p>
+            </div>
+
+            <!-- リストコンテナ -->
+            <div id="shop-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- 動的に挿入されます -->
+            </div>
+
+            <!-- データなし表示 -->
+            <div id="no-data" class="hidden text-center py-12 bg-dark-card rounded-xl border border-dark-border">
+                <i class="fa-solid fa-face-grimace text-3xl text-dark-muted mb-2"></i>
+                <p class="text-sm text-dark-muted">条件に一致するお店が見つかりませんでした。</p>
             </div>
         </div>
+
     </main>
 
-    <!-- フッターナビ -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-amber-100 flex justify-around p-3 shadow-lg z-50">
-        <button onclick="switchView('home')" class="text-amber-600 font-bold text-sm">🏠 ホーム</button>
-        <button onclick="switchView('post')" class="text-slate-400 font-bold text-sm">✍️ 投稿</button>
-    </nav>
+    <!-- お店追加・編集モーダル -->
+    <div id="shop-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-dark-card w-full max-w-lg rounded-2xl border border-dark-border shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-dark-border flex justify-between items-center bg-dark-input">
+                <h3 id="modal-title" class="font-bold text-base">お店を追加する</h3>
+                <button onclick="closeModal()" class="text-dark-muted hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-4 flex-1">
+                <input type="hidden" id="edit-shop-id">
+                <div>
+                    <label class="block text-xs font-semibold text-dark-muted mb-1">店名 <span class="text-orange-500">*</span></label>
+                    <input type="text" id="shop-name" placeholder="例: 焼肉レストラン〇〇" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-dark-muted mb-1">ジャンル <span class="text-orange-500">*</span></label>
+                        <select id="shop-genre" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                            <option value="和食">和食</option>
+                            <option value="洋食">洋食</option>
+                            <option value="中華">中華</option>
+                            <option value="ラーメン">ラーメン</option>
+                            <option value="焼肉・肉料理">焼肉・肉料理</option>
+                            <option value="居酒屋・バー">居酒屋・バー</option>
+                            <option value="カフェ・スイーツ">カフェ・スイーツ</option>
+                            <option value="エスニック・カレー">エスニック・カレー</option>
+                            <option value="その他">その他</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-dark-muted mb-1">都道府県 <span class="text-orange-500">*</span></label>
+                        <select id="shop-pref" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                            <option value="北海道">北海道</option><option value="青森県">青森県</option><option value="岩手県">岩手県</option><option value="宮城県">宮城県</option><option value="秋田県">秋田県</option><option value="山形県">山形県</option><option value="福島県">福島県</option><option value="茨城県">茨城県</option><option value="栃木県">栃木県</option><option value="群馬県">群馬県</option><option value="埼玉県">埼玉県</option><option value="千葉県">千葉県</option><option value="東京都">東京都</option><option value="神奈川県">神奈川県</option><option value="新潟県">新潟県</option><option value="富山県">富山県</option><option value="石川県">石川県</option><option value="福井県">福井県</option><option value="山梨県">山梨県</option><option value="長野県">長野県</option><option value="岐阜県">岐阜県</option><option value="静岡県">静岡県</option><option value="愛知県" selected>愛知県</option><option value="三重県">三重県</option><option value="滋賀県">滋賀県</option><option value="京都府">京都府</option><option value="大阪府">大阪府</option><option value="兵庫県">兵庫県</option><option value="奈良県">奈良県</option><option value="和歌山県">和歌山県</option><option value="鳥取県">鳥取県</option><option value="島根県">島根県</option><option value="岡山県">岡山県</option><option value="広島県">広島県</option><option value="山口県">山口県</option><option value="徳島県">徳島県</option><option value="香川県">香川県</option><option value="愛媛県">愛媛県</option><option value="高知県">高知県</option><option value="福岡県">福岡県</option><option value="佐賀県">佐賀県</option><option value="長崎県">長崎県</option><option value="熊本県">熊本県</option><option value="大分県">大分県</option><option value="宮崎県">宮崎県</option><option value="鹿児島県">鹿児島県</option><option value="沖縄県">沖縄県</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-dark-muted mb-1">市区町村・エリア</label>
+                    <input type="text" id="shop-city" placeholder="例: 名古屋市栄、豊田市等" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-dark-muted mb-1">おすすめメニュー・特徴</label>
+                    <textarea id="shop-comment" rows="2" placeholder="看板メニューや雰囲気など" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-dark-muted mb-1">参考URL（食べログやGoogleマップ等）</label>
+                    <input type="url" id="shop-url" placeholder="https://..." class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-dark-muted mb-1">お店の写真</label>
+                    <input type="file" id="shop-image" accept="image/*" class="w-full text-xs text-dark-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-orange-500/20 file:text-orange-400 hover:file:bg-orange-500/30 cursor-pointer">
+                    <div id="image-upload-progress" class="hidden mt-2 text-xs text-orange-400">画像をアップロード中...</div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-dark-border bg-dark-input flex justify-end space-x-2">
+                <button onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm bg-dark-border hover:bg-dark-muted/30 transition">キャンセル</button>
+                <button onclick="saveShop()" id="save-btn" class="px-5 py-2 rounded-lg text-sm bg-orange-500 hover:bg-orange-600 text-white font-bold transition flex items-center space-x-1">
+                    <span>保存する</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
-    <!-- Firebase SDK & 初期化 (nanikuu-v2専用) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
-        import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+    <!-- ルーレットモーダル -->
+    <div id="roulette-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-dark-card w-full max-w-md rounded-2xl border border-dark-border shadow-2xl p-6 text-center space-y-6">
+            <h3 class="font-bold text-lg text-orange-400"><i class="fa-solid fa-dice mr-2"></i>今日のランチガチャ</h3>
+            <div id="roulette-box" class="bg-dark-input border-2 border-orange-500/50 rounded-xl p-8 min-h-[140px] flex flex-col items-center justify-center space-y-2">
+                <span id="roulette-text" class="text-xl font-bold text-gray-200">お店を選んでいます...</span>
+                <span id="roulette-sub" class="text-xs text-dark-muted"></span>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="closeRouletteModal()" class="flex-1 bg-dark-border hover:bg-dark-muted/30 py-2.5 rounded-xl text-sm transition">とじる</button>
+                <button onclick="startRoulette()" id="roulette-btn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-xl text-sm transition shadow">もう一度回す</button>
+            </div>
+        </div>
+    </div>
 
+    <!-- スクリプト部 -->
+    <script>
+        // ==========================================
+        // 1. Firebase 設定
+        // ==========================================
         const firebaseConfig = {
-            apiKey: "AIzaSyCn8jK95Ubb1wz6RCDD3CAGM9ZA_R-zpPI",
-            authDomain: "nanikuu-v2.firebaseapp.com",
-            databaseURL: "https://nanikuu-v2-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "nanikuu-v2",
-            storageBucket: "nanikuu-v2.fireappstorage.app",
-            messagingSenderId: "302869563825",
-            appId: "1:302869563825:web:d24dda2fc4c395eb811590",
-            measurementId: "G-83PVL40HF8"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const storage = firebase.storage();
 
-        // ニックネーム管理
-        let nickname = localStorage.getItem('nanikuu_nickname');
-        if (!nickname) {
-            nickname = 'ゲストさん_' + Math.floor(Math.random() * 1000);
-            localStorage.setItem('nanikuu_nickname', nickname);
+        let currentUserName = '';
+        let allShops = [];
+
+        // ==========================================
+        // 2. 初期化・ユーザー名管理 (WEB版)
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            initUser();
+            loadShops();
+        });
+
+        function initUser() {
+            const savedName = localStorage.getItem('nanikuu_web_username');
+            if (savedName) {
+                currentUserName = savedName;
+            } else {
+                promptForUsername(true);
+            }
+            updateUsernameDisplay();
         }
-        document.getElementById('user-display').innerText = '👤 ' + nickname;
 
-        // 画面切り替え関数
-        window.switchView = function(viewName) {
-            document.getElementById('view-home').classList.add('hidden');
-            document.getElementById('view-post').classList.add('hidden');
-            document.getElementById('view-' + viewName).classList.remove('hidden');
-            window.scrollTo(0, 0);
-        };
+        function promptForUsername(isFirst = false) {
+            const message = isFirst 
+                ? 'WEB版「なにクウ？」へようこそ！\n投稿や「イッタヨ！」で使用するあなたのニックネームを入力してください：'
+                : 'ニックネームを変更してください：';
+            
+            const name = prompt(message, currentUserName || '');
+            if (name && name.trim() !== '') {
+                currentUserName = name.trim();
+                localStorage.setItem('nanikuu_web_username', currentUserName);
+            } else if (isFirst) {
+                currentUserName = 'ゲスト_' + Math.floor(Math.random() * 9000 + 1000);
+                localStorage.setItem('nanikuu_web_username', currentUserName);
+            }
+            updateUsernameDisplay();
+        }
 
-        // 投稿処理
-        window.handlePost = function(e) {
-            e.preventDefault();
-            const name = document.getElementById('shop-name').value;
-            const area = document.getElementById('shop-area').value;
-            const comment = document.getElementById('shop-comment').value;
+        function changeUsername() {
+            promptForUsername(false);
+        }
 
-            const postsRef = ref(db, 'posts');
-            const newPostRef = push(postsRef);
-            set(newPostRef, {
-                name: name,
-                area: area,
-                comment: comment,
-                author: nickname,
-                timestamp: Date.now()
-            }).then(() => {
-                document.getElementById('entry-form').reset();
-                switchView('home');
-            }).catch((error) => {
-                alert('投稿に失敗しました: ' + error.message);
+        function updateUsernameDisplay() {
+            const el = document.getElementById('display-username');
+            if (el) el.textContent = currentUserName;
+        }
+
+        // ==========================================
+        // 3. データの読み込み & フィルタリング
+        // ==========================================
+        function loadShops() {
+            const shopsRef = database.ref('shops');
+            shopsRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                allShops = [];
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        allShops.push({ id: key, ...data[key] });
+                    });
+                }
+                // 登録日の新しい順に並び替え
+                allShops.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                
+                document.getElementById('loading-spinner').classList.add('hidden');
+                filterShops();
+            }, (error) => {
+                console.error(error);
+                document.getElementById('loading-spinner').innerHTML = '<p class="text-red-400 text-xs">データの読み込みに失敗しました。</p>';
             });
-        };
+        }
 
-        // データのリアルタイム取得
-        const postsRef = ref(db, 'posts');
-        onValue(postsRef, (snapshot) => {
-            const listEl = document.getElementById('post-list');
-            const data = snapshot.val();
-            if (!data) {
-                listEl.innerHTML = '<p class="text-center text-slate-400 py-6">まだお店が投稿されていません。<br>最初の1店を投稿してみよう！</p>';
+        function filterShops() {
+            const keyword = document.getElementById('search-keyword').value.toLowerCase();
+            const genre = document.getElementById('filter-genre').value;
+            const pref = document.getElementById('filter-pref').value;
+
+            const filtered = allShops.filter(shop => {
+                const matchKeyword = !keyword || 
+                    (shop.name && shop.name.toLowerCase().includes(keyword)) ||
+                    (shop.city && shop.city.toLowerCase().includes(keyword)) ||
+                    (shop.comment && shop.comment.toLowerCase().includes(keyword));
+                
+                const matchGenre = !genre || shop.genre === genre;
+                const matchPref = !pref || shop.pref === pref;
+
+                return matchKeyword && matchGenre && matchPref;
+            });
+
+            renderShops(filtered);
+        }
+
+        function renderShops(shops) {
+            const listEl = document.getElementById('shop-list');
+            const noDataEl = document.getElementById('no-data');
+            const countEl = document.getElementById('shop-count');
+
+            countEl.textContent = shops.length;
+            listEl.innerHTML = '';
+
+            if (shops.length === 0) {
+                noDataEl.classList.remove('hidden');
+                return;
+            }
+            noDataEl.classList.add('hidden');
+
+            shops.forEach(shop => {
+                // イッタヨのカウント・状態判定
+                const itayoObj = shop.itayo || {};
+                const itayoCount = Object.keys(itayoObj).length;
+                // ブラウザ識別用として簡易的にユーザー名をキーにするか、ユーザー名が含まれているかで判定
+                const hasItayo = Object.values(itayoObj).some(name => name === currentUserName);
+
+                const card = document.createElement('div');
+                card.className = "bg-dark-card border border-dark-border rounded-xl overflow-hidden shadow-md flex flex-col justify-between";
+                
+                let imageHtml = '';
+                if (shop.imageUrl) {
+                    imageHtml = `<div class="h-40 w-full overflow-hidden bg-dark-input"><img src="${shop.imageUrl}" class="w-full h-full object-cover hover:scale-105 transition duration-300" alt="${shop.name}"></div>`;
+                } else {
+                    imageHtml = `<div class="h-24 w-full bg-dark-input flex items-center justify-center text-dark-muted"><i class="fa-solid fa-utensils text-2xl opacity-40"></i></div>`;
+                }
+
+                card.innerHTML = `
+                    <div>
+                        ${imageHtml}
+                        <div class="p-4 space-y-2">
+                            <div class="flex justify-between items-start">
+                                <div class="flex flex-wrap gap-1 items-center">
+                                    <span class="text-[10px] bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded border border-orange-500/30">${shop.genre || 'その他'}</span>
+                                    <span class="text-[10px] bg-dark-input text-dark-muted px-2 py-0.5 rounded border border-dark-border">${shop.pref || ''} ${shop.city || ''}</span>
+                                </div>
+                                <div class="flex space-x-1">
+                                    <button onclick="openEditModal('${shop.id}')" class="text-dark-muted hover:text-white p-1 text-xs" title="編集"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="deleteShop('${shop.id}')" class="text-dark-muted hover:text-red-400 p-1 text-xs" title="削除"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-base text-gray-100">${escapeHtml(shop.name)}</h3>
+                            ${shop.comment ? `<p class="text-xs text-dark-muted line-clamp-2">${escapeHtml(shop.comment)}</p>` : ''}
+                            ${shop.url ? `<a href="${escapeHtml(shop.url)}" target="_blank" class="text-xs text-orange-400 hover:underline inline-flex items-center space-x-1 pt-1"><i class="fa-solid fa-external-link-alt text-[10px]"></i><span>外部サイト・マップへ</span></a>` : ''}
+                        </div>
+                    </div>
+                    <div class="p-4 pt-0 border-t border-dark-border/40 mt-3 flex justify-between items-center bg-dark-card/50">
+                        <span class="text-[11px] text-dark-muted">追加: ${shop.author || '不明'}</span>
+                        <button onclick="toggleItayo('${shop.id}')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${hasItayo ? 'bg-orange-500 text-white shadow-sm' : 'bg-dark-input hover:bg-dark-border text-dark-muted border border-dark-border'}">
+                            <i class="fa-solid fa-check-circle"></i>
+                            <span>イッタヨ！ (${itayoCount})</span>
+                        </button>
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
+        }
+
+        // ==========================================
+        // 4. お店の追加・編集処理
+        // ==========================================
+        function openAddModal() {
+            document.getElementById('modal-title').textContent = 'お店を追加する';
+            document.getElementById('edit-shop-id').value = '';
+            document.getElementById('shop-name').value = '';
+            document.getElementById('shop-genre').value = '和食';
+            document.getElementById('shop-pref').value = '愛知県';
+            document.getElementById('shop-city').value = '';
+            document.getElementById('shop-comment').value = '';
+            document.getElementById('shop-url').value = '';
+            document.getElementById('shop-image').value = '';
+            document.getElementById('image-upload-progress').classList.add('hidden');
+            document.getElementById('shop-modal').classList.remove('hidden');
+        }
+
+        function openEditModal(id) {
+            const shop = allShops.find(s => s.id === id);
+            if (!shop) return;
+
+            document.getElementById('modal-title').textContent = 'お店を編集する';
+            document.getElementById('edit-shop-id').value = shop.id;
+            document.getElementById('shop-name').value = shop.name || '';
+            document.getElementById('shop-genre').value = shop.genre || '和食';
+            document.getElementById('shop-pref').value = shop.pref || '愛知県';
+            document.getElementById('shop-city').value = shop.city || '';
+            document.getElementById('shop-comment').value = shop.comment || '';
+            document.getElementById('shop-url').value = shop.url || '';
+            document.getElementById('shop-image').value = '';
+            document.getElementById('image-upload-progress').classList.add('hidden');
+            document.getElementById('shop-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('shop-modal').classList.add('hidden');
+        }
+
+        async function saveShop() {
+            const id = document.getElementById('edit-shop-id').value;
+            const name = document.getElementById('shop-name').value.trim();
+            const genre = document.getElementById('shop-genre').value;
+            const pref = document.getElementById('shop-pref').value;
+            const city = document.getElementById('shop-city').value.trim();
+            const comment = document.getElementById('shop-comment').value.trim();
+            const url = document.getElementById('shop-url').value.trim();
+            const imageFile = document.getElementById('shop-image').files[0];
+
+            if (!name) {
+                alert('店名を入力してください。');
                 return;
             }
 
-            let html = '';
-            const posts = Object.entries(data).reverse(); // 新しい順
-            for (const [id, post] of posts) {
-                html += `
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-amber-100 space-y-1">
-                        <div class="flex justify-between items-start">
-                            <h3 class="font-bold text-amber-900">${escapeHtml(post.name)}</h3>
-                            <span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">${escapeHtml(post.area)}</span>
-                        </div>
-                        <p class="text-sm text-slate-600">${escapeHtml(post.comment || '')}</p>
-                        <div class="text-right text-xs text-slate-400 pt-1">投稿者: ${escapeHtml(post.author)}</div>
-                    </div>
-                `;
+            const saveBtn = document.getElementById('save-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = '保存中...';
+
+            let imageUrl = '';
+            if (id) {
+                const existing = allShops.find(s => s.id === id);
+                if (existing && existing.imageUrl) imageUrl = existing.imageUrl;
             }
-            listEl.innerHTML = html;
-        });
+
+            // 画像が選択されている場合はリサイズしてFirebase Storageへアップロード
+            if (imageFile) {
+                try {
+                    document.getElementById('image-upload-progress').classList.remove('hidden');
+                    const resizedBlob = await resizeImage(imageFile, 800, 800, 0.7);
+                    const storageRef = storage.ref(`shops/${Date.now()}_${imageFile.name}`);
+                    const snapshot = await storageRef.put(resizedBlob);
+                    imageUrl = await snapshot.ref.getDownloadURL();
+                } catch (e) {
+                    console.error(e);
+                    alert('画像のアップロードに失敗しました。');
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = '保存する';
+                    return;
+                }
+            }
+
+            const shopData = {
+                name,
+                genre,
+                pref,
+                city,
+                comment,
+                url,
+                imageUrl,
+                author: currentUserName,
+                updatedAt: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            const shopsRef = database.ref('shops');
+            if (id) {
+                await shopsRef.child(id).update(shopData);
+            } else {
+                shopData.createdAt = firebase.database.ServerValue.TIMESTAMP;
+                await shopsRef.push(shopData);
+            }
+
+            saveBtn.disabled = false;
+            saveBtn.textContent = '保存する';
+            closeModal();
+        }
+
+        function deleteShop(id) {
+            if (confirm('このお店の情報を削除してもよろしいですか？')) {
+                database.ref(`shops/${id}`).remove();
+            }
+        }
+
+        // ==========================================
+        // 5. 「イッタヨ！」機能
+        // ==========================================
+        function toggleItayo(shopId) {
+            const shopRef = database.ref(`shops/${shopId}/itayo`);
+            shopRef.once('value', (snapshot) => {
+                const itayoData = snapshot.val() || {};
+                let userKeyToToggle = null;
+
+                // 既に自分が押しているか確認
+                Object.keys(itayoData).forEach(key => {
+                    if (itayoData[key] === currentUserName) {
+                        userKeyToToggle = key;
+                    }
+                });
+
+                if (userKeyToToggle) {
+                    // 登録済みの場合は解除
+                    shopRef.child(userKeyToToggle).remove();
+                } else {
+                    // 未登録の場合は追加
+                    shopRef.push(currentUserName);
+                }
+            });
+        }
+
+        // ==========================================
+        // 6. ルーレット（ガチャ）機能
+        // ==========================================
+        function openRouletteModal() {
+            if (allShops.length === 0) {
+                alert('お店がまだ登録されていません。');
+                return;
+            }
+            document.getElementById('roulette-modal').classList.remove('hidden');
+            startRoulette();
+        }
+
+        function closeRouletteModal() {
+            document.getElementById('roulette-modal').classList.add('hidden');
+        }
+
+        function startRoulette() {
+            const rouletteText = document.getElementById('roulette-text');
+            const rouletteSub = document.getElementById('roulette-sub');
+            const rouletteBtn = document.getElementById('roulette-btn');
+            
+            rouletteBtn.disabled = true;
+            rouletteText.classList.add('slot-animation');
+
+            let count = 0;
+            const maxCount = 20;
+            const timer = setInterval(() => {
+                const randomShop = allShops[Math.floor(Math.random() * allShops.length)];
+                rouletteText.textContent = randomShop.name;
+                rouletteSub.textContent = `${randomShop.genre} / ${randomShop.pref} ${randomShop.city || ''}`;
+                count++;
+
+                if (count >= maxCount) {
+                    clearInterval(timer);
+                    rouletteText.classList.remove('slot-animation');
+                    const finalShop = allShops[Math.floor(Math.random() * allShops.length)];
+                    rouletteText.textContent = finalShop.name;
+                    rouletteSub.textContent = `${finalShop.genre} / ${finalShop.pref} ${finalShop.city || ''} 🎉`;
+                    rouletteBtn.disabled = false;
+                }
+            }, 80);
+        }
+
+        // ==========================================
+        // 7. 画像リサイズユーティリティ
+        // ==========================================
+        function resizeImage(file, maxWidth, maxHeight, quality) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > maxWidth) {
+                                height *= maxWidth / width;
+                                width = maxWidth;
+                            }
+                        } else {
+                            if (height > maxHeight) {
+                                width *= maxHeight / height;
+                                height = maxHeight;
+                            }
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        canvas.toBlob((blob) => {
+                            resolve(blob);
+                        }, 'image/jpeg', quality);
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
 
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/[&'`"<>]/g, (match) => {
                 return {
                     '&': '&amp;',
-                    "'": '&#x27;',
+                    QUOTE: '&#x27;',
                     '`': '&#x60;',
                     '"': '&quot;',
                     '<': '&lt;',
-                    '>': '&gt;',
+                    '>': '&gt;'
                 }[match];
             });
         }
