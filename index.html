@@ -52,25 +52,14 @@
             background-color: #1e1e1e;
         }
 
+        /* 元の雲がかかったような霧・雲レイヤーの質感に戻す */
         .cloud-fog-layer {
             position: absolute;
             inset: 0;
             z-index: 10;
             pointer-events: none;
-            transition: opacity 1s ease;
-            background: rgba(255, 255, 255, 0.55);
-            backdrop-filter: blur(1px);
-            filter: url(#cloud-filter);
-            mix-blend-mode: screen;
-        }
-
-        .cloud-base-overlay {
-            position: absolute;
-            inset: 0;
-            z-index: 9;
-            pointer-events: none;
-            background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.2) 0%, rgba(100, 116, 139, 0.35) 100%);
-            transition: opacity 1s ease;
+            background: radial-gradient(circle at 50% 40%, rgba(220, 230, 242, 0.4) 0%, rgba(140, 155, 175, 0.75) 100%);
+            backdrop-filter: blur(1.5px);
         }
 
         #cloud-svg-overlay {
@@ -91,15 +80,6 @@
     </style>
 </head>
 <body class="min-h-screen pb-32">
-
-    <svg style="display:none;">
-        <filter id="cloud-filter" x="-20%" y="-20%" width="140%" height="140%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="25" xChannelSelector="R" yChannelSelector="G" result="displacement" />
-            <feGaussianBlur in="displacement" stdDeviation="8" result="blur" />
-            <feComposite operator="in" in2="SourceGraphic" />
-        </filter>
-    </svg>
 
     <!-- オープニング画面 -->
     <div id="splash-screen" class="fixed inset-0 z-50 bg-dark-bg flex flex-col items-center justify-center p-6 text-center transition-opacity duration-700">
@@ -148,21 +128,20 @@
                     </div>
                     <span id="exploration-rate" class="text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2.5 py-1 rounded-full font-bold">開拓スポット: 0件</span>
                 </div>
-                <p class="text-xs text-dark-muted">お店を登録すると、ふわっと柔らかくその周辺の雲が晴れていきます！</p>
+                <p class="text-xs text-dark-muted">お店を登録すると、周辺の雲が◯の形で晴れていきます！</p>
                 
                 <div class="relative rounded-2xl overflow-hidden border border-dark-border shadow-inner">
                     <div id="map"></div>
-                    <div id="cloud-base" class="cloud-base-overlay"></div>
                     <div id="cloud-fog" class="cloud-fog-layer"></div>
-                    <!-- 雲穴あけ用SVG (ふわふわのフィルター適用) -->
+                    <!-- 雲穴あけ用SVG (◯で綺麗にくり抜くマスク) -->
                     <svg id="cloud-svg-overlay">
                         <defs>
                             <mask id="cloud-mask">
                                 <rect width="100%" height="100%" fill="white" />
-                                <g id="cloud-holes" filter="url(#cloud-filter)"></g>
+                                <g id="cloud-holes"></g>
                             </mask>
                         </defs>
-                        <rect width="100%" height="100%" fill="rgba(200, 210, 225, 0.65)" mask="url(#cloud-mask)" />
+                        <rect width="100%" height="100%" fill="rgba(160, 175, 195, 0.85)" mask="url(#cloud-mask)" />
                     </svg>
                     
                     <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none w-11/12 max-w-xs">
@@ -476,7 +455,7 @@
             });
         }
 
-        // 雲を「ふわふわ」と柔らかく丸くくり抜く関数
+        // 雲を綺麗な「◯（円）」でくり抜く関数
         function updateCloudHoles() {
             const holesGroup = document.getElementById('cloud-holes');
             if (!holesGroup || !map) return;
@@ -488,7 +467,7 @@
                     validCount++;
                     const point = map.latLngToContainerPoint([shop.lat, shop.lng]);
                     const metersPerPixel = 40075016.686 * Math.cos(shop.lat * Math.PI / 180) / Math.pow(2, map.getZoom() + 8);
-                    const radius = Math.max(30, Math.min(220, 900 / metersPerPixel));
+                    const radius = Math.max(35, Math.min(250, 1000 / metersPerPixel));
 
                     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                     circle.setAttribute('cx', point.x);
@@ -616,30 +595,25 @@
         }
         function closeModal() { document.getElementById('shop-modal').classList.add('hidden'); }
 
-        // より正確に住所を一致させるためのジオコーディング処理
+        // 国土地理院APIを使用して住所とピンのズレを完全に解消
         async function getLatLngFromAddress(pref, city, address) {
-            const cleanCity = city.trim();
-            const cleanAddress = address.trim();
-            
             const queries = [
-                `${pref} ${cleanCity} ${cleanAddress}`,
-                `${pref}${cleanCity}${cleanAddress}`,
-                `${pref} ${cleanCity}`,
+                `${pref}${city}${address}`,
+                `${pref}${city}`,
                 pref
             ];
 
             for (const q of queries) {
                 if (!q) continue;
                 try {
-                    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=jp&limit=1`, {
-                        headers: { 'Accept-Language': 'ja' }
-                    });
+                    const response = await fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(q)}`);
                     const data = await response.json();
                     if (data && data.length > 0) {
-                        return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+                        const coordinates = data[0].geometry.coordinates; // [lng, lat]
+                        return { lat: coordinates[1], lng: coordinates[0] };
                     }
                 } catch (e) {
-                    console.error('Geocoding retry error:', e);
+                    console.error('GSI Geocoding error:', e);
                 }
             }
             return null;
