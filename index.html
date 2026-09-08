@@ -50,38 +50,38 @@
             z-index: 1;
         }
 
-        /* リアルな雲・霧レイヤー（SVGフィルターを活用） */
+        /* 自然なリアル雲・霧レイヤー */
         .cloud-fog-layer {
             position: absolute;
             inset: 0;
             z-index: 10;
             pointer-events: none;
             transition: opacity 1s ease;
-            /* SVGのturbulenceフィルターを適用してモクモクした雲の質感を出す */
-            background: rgba(240, 244, 248, 0.85);
-            backdrop-filter: blur(2px);
+            /* 白〜グレーの美しい雲の質感をSVGノイズで表現 */
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(1px);
             filter: url(#cloud-filter);
-            mix-blend-mode: overlay;
+            mix-blend-mode: screen; /* 下の衛星写真が暗くなりすぎず綺麗に透けるモード */
         }
 
-        /* 雲のベースとなるソフトな白みオーバーレイ */
+        /* 雲全体のふんわりした重なり感 */
         .cloud-base-overlay {
             position: absolute;
             inset: 0;
             z-index: 9;
             pointer-events: none;
-            background: radial-gradient(circle at 50% 40%, rgba(200, 210, 225, 0.4) 0%, rgba(15, 23, 42, 0.7) 100%);
+            background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.2) 0%, rgba(100, 116, 139, 0.35) 100%);
             transition: opacity 1s ease;
         }
     </style>
 </head>
 <body class="min-h-screen pb-32">
 
-    <!-- SVGフィルター定義（本物の雲・モクモク感を生成） -->
+    <!-- SVGフィルター定義（モノトーンのリアルな雲の質感に修正） -->
     <svg style="display:none;">
         <filter id="cloud-filter">
-            <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="4" result="noise" />
-            <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1.5 -0.2" in="noise" result="coloredNoise" />
+            <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" result="noise" />
+            <feColorMatrix type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 1.2 0" in="noise" result="monoNoise" />
             <feComposite operator="in" in2="SourceGraphic" />
         </filter>
     </svg>
@@ -381,17 +381,17 @@
             Object.values(prefClearedMap).forEach(set => totalClearedCities += set.size);
             document.getElementById('exploration-rate').textContent = `発見市区町村: ${totalClearedCities}件`;
 
-            // 店舗数に応じて本物の雲・霧がリアルに晴れていく演出
+            // 雲の濃さを調整（薄めにして下の衛星写真が見えるようにする）
             const cloudFog = document.getElementById('cloud-fog');
             const cloudBase = document.getElementById('cloud-base');
             
             if (totalClearedCities > 0) {
-                const clearFactor = Math.max(0.1, 0.9 - (totalClearedCities * 0.08));
+                const clearFactor = Math.max(0.05, 0.55 - (totalClearedCities * 0.05));
                 cloudFog.style.opacity = clearFactor;
                 cloudBase.style.opacity = clearFactor;
             } else {
-                cloudFog.style.opacity = 0.9;
-                cloudBase.style.opacity = 0.9;
+                cloudFog.style.opacity = 0.55;
+                cloudBase.style.opacity = 0.55;
             }
         }
 
