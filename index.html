@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>なにクウ？ - 自分だけのグルメ手帳</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -25,19 +24,10 @@
             }
         }
     </script>
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase SDK (v8) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        @keyframes slotSpin {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(-100%); }
-        }
-        .slot-animation {
-            animation: slotSpin 0.1s linear infinite;
-        }
         @keyframes pulseGlow {
             0%, 100% { text-shadow: 0 0 15px rgba(249, 115, 22, 0.6); transform: scale(1); }
             50% { text-shadow: 0 0 30px rgba(249, 115, 22, 0.9); transform: scale(1.03); }
@@ -50,48 +40,32 @@
             0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(249, 115, 22, 0.4); }
             50% { transform: scale(1.05); box-shadow: 0 0 35px rgba(249, 115, 22, 0.7); }
         }
-        .anim-title {
-            animation: pulseGlow 2s ease-in-out infinite;
-        }
-        .anim-icon {
-            animation: floatIcon 1.5s ease-in-out infinite;
-        }
-        .anim-start-btn {
-            animation: pulseBtn 2s ease-in-out infinite;
-        }
-        body {
-            background-color: #121212;
-            color: #f3f4f6;
-        }
-        .fog-container {
-            position: relative;
-            overflow: hidden;
-            background: linear-gradient(135deg, #18181b 0%, #27272a 100%);
+        .anim-title { animation: pulseGlow 2s ease-in-out infinite; }
+        .anim-icon { animation: floatIcon 1.5s ease-in-out infinite; }
+        .anim-start-btn { animation: pulseBtn 2s ease-in-out infinite; }
+        body { background-color: #121212; color: #f3f4f6; }
+        .fog-pattern {
+            background: repeating-linear-gradient(45deg, #1e293b, #1e293b 10px, #0f172a 10px, #0f172a 20px);
         }
     </style>
 </head>
 <body class="min-h-screen pb-32">
 
-    <!-- ゲーム風オープニング画面 -->
+    <!-- オープニング画面 -->
     <div id="splash-screen" class="fixed inset-0 z-50 bg-dark-bg flex flex-col items-center justify-center p-6 text-center transition-opacity duration-700">
         <div class="space-y-6 max-w-sm w-full flex flex-col items-center">
             <div class="inline-block text-orange-500 text-5xl anim-icon mb-2">
                 <i class="fa-solid fa-utensils"></i>
             </div>
             <div class="space-y-2">
-                <h1 class="text-3xl font-black tracking-widest text-white anim-title">
-                    なにクウ？
-                </h1>
-                <p class="text-xs text-orange-400 font-bold tracking-wider uppercase border-t border-b border-orange-500/30 py-1 inline-block px-4">
-                    - 自分だけのグルメ手帳 -
-                </p>
+                <h1 class="text-3xl font-black tracking-widest text-white anim-title">なにクウ？</h1>
+                <p class="text-xs text-orange-400 font-bold tracking-wider uppercase border-t border-b border-orange-500/30 py-1 inline-block px-4">- 日本全国 市区町村開拓手帳 -</p>
             </div>
-            <p class="text-xs text-dark-muted">お店を登録して日本全国の市区町村の霧を晴らそう！</p>
-            
+            <p class="text-xs text-dark-muted">都道府県をタップして、各地域の市区町村の霧を晴らそう！</p>
             <div class="pt-6">
-                <button onclick="closeSplashScreen()" class="anim-start-btn group relative bg-gradient-to-b from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white w-28 h-28 rounded-full shadow-2xl flex flex-col items-center justify-center border-4 border-amber-300/60 transition transform active:scale-95 cursor-pointer">
-                    <i class="fa-solid fa-bowl-food text-3xl mb-1 text-amber-100 drop-shadow"></i>
-                    <span class="text-xs font-black tracking-widest uppercase text-amber-100 drop-shadow-md">START</span>
+                <button onclick="closeSplashScreen()" class="anim-start-btn group bg-gradient-to-b from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white w-28 h-28 rounded-full shadow-2xl flex flex-col items-center justify-center border-4 border-amber-300/60 transition transform active:scale-95 cursor-pointer">
+                    <i class="fa-solid fa-bowl-food text-3xl mb-1 text-amber-100"></i>
+                    <span class="text-xs font-black tracking-widest uppercase text-amber-100">START</span>
                 </button>
             </div>
         </div>
@@ -102,14 +76,12 @@
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-utensils text-orange-500 text-xl"></i>
-                <h1 class="text-lg font-bold tracking-wider">なにクウ？ <span class="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/30">ver2 WEB</span></h1>
+                <h1 class="text-lg font-bold tracking-wider">なにクウ？ <span class="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/30">Japan Edition</span></h1>
             </div>
             <div class="flex items-center space-x-2 bg-dark-input px-3 py-1.5 rounded-full border border-dark-border text-sm">
                 <i class="fa-solid fa-user text-orange-400"></i>
                 <span id="display-username" class="font-medium max-w-[100px] truncate">ゲスト</span>
-                <button onclick="changeUsername()" class="text-dark-muted hover:text-white transition" title="名前を変更">
-                    <i class="fa-solid fa-pen text-xs"></i>
-                </button>
+                <button onclick="changeUsername()" class="text-dark-muted hover:text-white transition"><i class="fa-solid fa-pen text-xs"></i></button>
             </div>
         </div>
     </header>
@@ -117,26 +89,26 @@
     <!-- メインコンテンツ -->
     <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
 
-        <!-- 日本地図 市区町村フォグ・オブ・ウォーセクション -->
-        <section class="bg-dark-card border border-dark-border rounded-2xl p-5 shadow-xl relative overflow-hidden fog-container">
-            <div class="relative z-10 space-y-4">
+        <!-- 日本地図・都道府県フォグオブウォーセクション -->
+        <section class="bg-dark-card border border-dark-border rounded-2xl p-5 shadow-xl relative overflow-hidden">
+            <div class="space-y-4">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center space-x-2">
                         <i class="fa-solid fa-map-location-dot text-orange-400 text-lg"></i>
-                        <h2 class="font-bold text-base text-white">日本地図 市区町村開拓ゲーム</h2>
+                        <h2 class="font-bold text-base text-white">日本地図 開拓ゲーム</h2>
                     </div>
-                    <span id="exploration-rate" class="text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2.5 py-1 rounded-full font-bold">発見率: 0件</span>
+                    <span id="exploration-rate" class="text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2.5 py-1 rounded-full font-bold">発見市区町村: 0件</span>
                 </div>
-                <p class="text-xs text-dark-muted">お店を登録する際、都道府県と「市区町村名」を入力すると、その地域の霧が晴れていきます！日本全国の制覇を目指そう。</p>
+                <p class="text-xs text-dark-muted">都道府県をタップすると、その県内の市町村ごとの「霧の晴れ具合」を確認できます。未投稿の地域の霧は晴れません！</p>
                 
-                <div class="bg-dark-input/80 border border-dark-border rounded-xl p-4 text-center relative min-h-[160px] flex flex-col items-center justify-center">
-                    <canvas id="japan-map-canvas" width="320" height="150" class="max-w-full h-auto drop-shadow-md rounded-lg"></canvas>
-                    <div id="map-status-text" class="text-xs text-orange-300 mt-2 font-medium">晴れた市区町村: 0 件</div>
+                <!-- 地方別セレクター -->
+                <div class="space-y-3 pt-2" id="region-container">
+                    <!-- 動的に地方・都道府県ボタンが生成されます -->
                 </div>
             </div>
         </section>
 
-        <!-- 飲食店リスト表示エリア -->
+        <!-- 飲食店リスト -->
         <div class="space-y-4">
             <div class="flex justify-between items-center px-1">
                 <h2 class="text-sm font-bold text-dark-muted uppercase tracking-wider">登録されたお店 (<span id="shop-count">0</span>件)</h2>
@@ -147,9 +119,7 @@
                 <p class="text-xs text-dark-muted mt-2">データを読み込んでいます...</p>
             </div>
 
-            <div id="shop-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- 動的に挿入されます -->
-            </div>
+            <div id="shop-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
 
             <div id="no-data" class="hidden text-center py-12 bg-dark-card rounded-xl border border-dark-border">
                 <i class="fa-solid fa-face-grimace text-3xl text-dark-muted mb-2"></i>
@@ -159,74 +129,61 @@
 
     </main>
 
-    <!-- 画面下の固定コントロールバー -->
+    <!-- フッターバー -->
     <nav class="fixed bottom-0 left-0 right-0 z-40 bg-dark-card/95 backdrop-blur-md border-t border-dark-border px-4 py-3 shadow-2xl">
         <div class="max-w-4xl mx-auto flex items-center justify-around gap-2">
-            <button onclick="openSearchModal()" class="flex-1 bg-dark-input hover:bg-dark-border border border-dark-border text-dark-text font-medium py-3 px-2 rounded-xl text-xs sm:text-sm transition flex flex-col sm:flex-row items-center justify-center gap-1">
+            <button onclick="openSearchModal()" class="flex-1 bg-dark-input hover:bg-dark-border border border-dark-border text-dark-text font-medium py-3 px-2 rounded-xl text-xs transition flex flex-col sm:flex-row items-center justify-center gap-1">
                 <i class="fa-solid fa-search text-orange-400 text-base"></i>
                 <span>検索・絞り込み</span>
             </button>
-
-            <button onclick="openRouletteModal()" class="w-16 bg-dark-input hover:bg-dark-border border border-orange-500/40 text-orange-400 font-medium py-3 px-2 rounded-xl transition flex items-center justify-center" title="ランチガチャ">
+            <button onclick="openRouletteModal()" class="w-16 bg-dark-input hover:bg-dark-border border border-orange-500/40 text-orange-400 font-medium py-3 px-2 rounded-xl transition flex items-center justify-center" title="ガチャ">
                 <i class="fa-solid fa-dice text-2xl animate-bounce"></i>
             </button>
-
-            <button onclick="openAddModal()" class="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold py-3 px-2 rounded-xl text-xs sm:text-sm transition shadow-lg flex flex-col sm:flex-row items-center justify-center gap-1">
+            <button onclick="openAddModal()" class="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold py-3 px-2 rounded-xl text-xs transition shadow-lg flex flex-col sm:flex-row items-center justify-center gap-1">
                 <i class="fa-solid fa-plus-circle text-base"></i>
                 <span>お店を追加</span>
             </button>
         </div>
     </nav>
 
-    <!-- 検索・フィルターモーダル -->
+    <!-- 都道府県詳細（市町村の霧状況）モーダル -->
+    <div id="pref-detail-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-dark-card w-full max-w-md rounded-2xl border border-dark-border shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="p-4 border-b border-dark-border flex justify-between items-center bg-dark-input">
+                <h3 id="modal-pref-title" class="font-bold text-base text-orange-400">都道府県詳細</h3>
+                <button onclick="closePrefModal()" class="text-dark-muted hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-5 overflow-y-auto space-y-3 flex-1" id="pref-detail-content">
+                <!-- 市町村ごとの霧の晴れ具合リストが入ります -->
+            </div>
+            <div class="p-4 border-t border-dark-border bg-dark-input flex justify-end">
+                <button onclick="closePrefModal()" class="px-5 py-2 rounded-lg text-sm bg-orange-500 hover:bg-orange-600 text-white font-bold transition">とじる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 検索モーダル -->
     <div id="search-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
         <div class="bg-dark-card w-full max-w-lg rounded-t-2xl sm:rounded-2xl border border-dark-border shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-4 border-b border-dark-border flex justify-between items-center bg-dark-input">
-                <h3 class="font-bold text-base"><i class="fa-solid fa-search text-orange-400 mr-2"></i>お店を検索・絞り込み</h3>
+                <h3 class="font-bold text-base"><i class="fa-solid fa-search text-orange-400 mr-2"></i>お店を検索</h3>
                 <button onclick="closeSearchModal()" class="text-dark-muted hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-6 space-y-4 overflow-y-auto">
                 <div>
-                    <label class="block text-xs font-semibold text-dark-muted mb-1">フリーワード検索</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-dark-muted">
-                            <i class="fa-solid fa-search"></i>
-                        </span>
-                        <input type="text" id="search-keyword" placeholder="店名・市区町村名など" oninput="filterShops()" class="w-full bg-dark-input border border-dark-border rounded-lg pl-9 pr-3.5 py-2 text-sm focus:outline-none focus:border-orange-500">
-                    </div>
+                    <label class="block text-xs font-semibold text-dark-muted mb-1">フリーワード</label>
+                    <input type="text" id="search-keyword" placeholder="店名・市区町村名など" oninput="filterShops()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-dark-muted mb-1">ジャンル</label>
                     <select id="filter-genre" onchange="filterShops()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
                         <option value="">すべてのジャンル</option>
-                        <option value="和食">和食</option>
-                        <option value="洋食">洋食</option>
-                        <option value="中華">中華</option>
-                        <option value="ラーメン">ラーメン</option>
-                        <option value="焼肉・肉料理">焼肉・肉料理</option>
-                        <option value="居酒屋・バー">居酒屋・バー</option>
-                        <option value="カフェ・スイーツ">カフェ・スイーツ</option>
-                        <option value="エスニック・カレー">エスニック・カレー</option>
-                        <option value="その他">その他</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-dark-muted mb-1">都道府県</label>
-                    <select id="filter-pref" onchange="filterShops()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
-                        <option value="">すべての都道府県</option>
-                        <option value="北海道">北海道</option><option value="青森県">青森県</option><option value="岩手県">岩手県</option><option value="宮城県">宮城県</option><option value="秋田県">秋田県</option><option value="山形県">山形県</option><option value="福島県">福島県</option>
-                        <option value="茨城県">茨城県</option><option value="栃木県">栃木県</option><option value="群馬県">群馬県</option><option value="埼玉県">埼玉県</option><option value="千葉県">千葉県</option><option value="東京都">東京都</option><option value="神奈川県">神奈川県</option>
-                        <option value="新潟県">新潟県</option><option value="富山県">富山県</option><option value="石川県">石川県</option><option value="福井県">福井県</option><option value="山梨県">山梨県</option><option value="長野県">長野県</option>
-                        <option value="岐阜県">岐阜県</option><option value="静岡県">静岡県</option><option value="愛知県">愛知県</option><option value="三重県">三重県</option>
-                        <option value="滋賀県">滋賀県</option><option value="京都府">京都府</option><option value="大阪府">大阪府</option><option value="兵庫県">兵庫県</option><option value="奈良県">奈良県</option><option value="和歌山県">和歌山県</option>
-                        <option value="鳥取県">鳥取県</option><option value="島根県">島根県</option><option value="岡山県">岡山県</option><option value="広島県">広島県</option><option value="山口県">山口県</option>
-                        <option value="徳島県">徳島県</option><option value="香川県">香川県</option><option value="愛媛県">愛媛県</option><option value="高知県">高知県</option>
-                        <option value="福岡県">福岡県</option><option value="佐賀県">佐賀県</option><option value="長崎県">長崎県</option><option value="熊本県">熊本県</option><option value="大分県">大分県</option><option value="宮崎県">宮崎県</option><option value="鹿児島県">鹿児島県</option><option value="沖縄県">沖縄県</option>
+                        <option value="和食">和食</option><option value="洋食">洋食</option><option value="中華">中華</option><option value="ラーメン">ラーメン</option><option value="焼肉・肉料理">焼肉・肉料理</option><option value="居酒屋・バー">居酒屋・バー</option><option value="カフェ・スイーツ">カフェ・スイーツ</option><option value="エスニック・カレー">エスニック・カレー</option><option value="その他">その他</option>
                     </select>
                 </div>
             </div>
             <div class="p-4 border-t border-dark-border bg-dark-input flex justify-end">
-                <button onclick="closeSearchModal()" class="w-full sm:w-auto px-6 py-2.5 rounded-lg text-sm bg-orange-500 hover:bg-orange-600 text-white font-bold transition">完了</button>
+                <button onclick="closeSearchModal()" class="px-6 py-2 rounded-lg text-sm bg-orange-500 hover:bg-orange-600 text-white font-bold transition">完了</button>
             </div>
         </div>
     </div>
@@ -248,20 +205,13 @@
                     <div>
                         <label class="block text-xs font-semibold text-dark-muted mb-1">ジャンル <span class="text-orange-500">*</span></label>
                         <select id="shop-genre" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
-                            <option value="和食">和食</option>
-                            <option value="洋食">洋食</option>
-                            <option value="中華">中華</option>
-                            <option value="ラーメン">ラーメン</option>
-                            <option value="焼肉・肉料理">焼肉・肉料理</option>
-                            <option value="居酒屋・バー">居酒屋・バー</option>
-                            <option value="カフェ・スイーツ">カフェ・スイーツ</option>
-                            <option value="エスニック・カレー">エスニック・カレー</option>
-                            <option value="その他">その他</option>
+                            <option value="和食">和食</option><option value="洋食">洋食</option><option value="中華">中華</option><option value="ラーメン">ラーメン</option><option value="焼肉・肉料理">焼肉・肉料理</option><option value="居酒屋・バー">居酒屋・バー</option><option value="カフェ・スイーツ">カフェ・スイーツ</option><option value="エスニック・カレー">エスニック・カレー</option><option value="その他">その他</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-dark-muted mb-1">都道府県 <span class="text-orange-500">*</span></label>
                         <select id="shop-pref" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                            <!-- 47都道府県 -->
                             <option value="北海道">北海道</option><option value="青森県">青森県</option><option value="岩手県">岩手県</option><option value="宮城県">宮城県</option><option value="秋田県">秋田県</option><option value="山形県">山形県</option><option value="福島県">福島県</option>
                             <option value="茨城県">茨城県</option><option value="栃木県">栃木県</option><option value="群馬県">群馬県</option><option value="埼玉県">埼玉県</option><option value="千葉県">千葉県</option><option value="東京都" selected>東京都</option><option value="神奈川県">神奈川県</option>
                             <option value="新潟県">新潟県</option><option value="富山県">富山県</option><option value="石川県">石川県</option><option value="福井県">福井県</option><option value="山梨県">山梨県</option><option value="長野県">長野県</option>
@@ -274,28 +224,26 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-dark-muted mb-1">市区町村名 <span class="text-orange-500">* (霧を晴らす細かめの単位)</span></label>
-                    <input type="text" id="shop-city" placeholder="例: 名古屋市栄 / 渋谷区宇田川町 / 四日市市 等" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                    <label class="block text-xs font-semibold text-dark-muted mb-1">市区町村名 <span class="text-orange-500">* (例: 渋谷区 / 名古屋市中村区)</span></label>
+                    <input type="text" id="shop-city" placeholder="市区町村名を入力" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-dark-muted mb-1">おすすめメニュー・特徴</label>
-                    <textarea id="shop-comment" rows="2" placeholder="看板メニューや雰囲気など" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500"></textarea>
+                    <label class="block text-xs font-semibold text-dark-muted mb-1">おすすめメニュー・コメント</label>
+                    <textarea id="shop-comment" rows="2" placeholder="感想など" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500"></textarea>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-dark-muted mb-1">参考URL（食べログやGoogleマップ等）</label>
+                    <label class="block text-xs font-semibold text-dark-muted mb-1">参考URL</label>
                     <input type="url" id="shop-url" placeholder="https://..." class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-dark-muted mb-1">お店の写真</label>
-                    <input type="file" id="shop-image" accept="image/*" class="w-full text-xs text-dark-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-orange-500/20 file:text-orange-400 hover:file:bg-orange-500/30 cursor-pointer">
+                    <input type="file" id="shop-image" accept="image/*" class="w-full text-xs text-dark-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-orange-500/20 file:text-orange-400 cursor-pointer">
                     <div id="image-upload-progress" class="hidden mt-2 text-xs text-orange-400">画像処理中...</div>
                 </div>
             </div>
             <div class="p-4 border-t border-dark-border bg-dark-input flex justify-end space-x-2">
                 <button onclick="closeModal()" class="px-4 py-2 rounded-lg text-sm bg-dark-border hover:bg-dark-muted/30 transition">キャンセル</button>
-                <button onclick="saveShop()" id="save-btn" class="px-5 py-2 rounded-lg text-sm bg-orange-500 hover:bg-orange-600 text-white font-bold transition flex items-center space-x-1">
-                    <span>保存する</span>
-                </button>
+                <button onclick="saveShop()" id="save-btn" class="px-5 py-2 rounded-lg text-sm bg-orange-500 hover:bg-orange-600 text-white font-bold transition">保存する</button>
             </div>
         </div>
     </div>
@@ -310,18 +258,15 @@
             </div>
             <div class="flex space-x-3">
                 <button onclick="closeRouletteModal()" class="flex-1 bg-dark-border hover:bg-dark-muted/30 py-2.5 rounded-lg text-sm transition">とじる</button>
-                <button onclick="startRoulette()" id="roulette-btn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-lg text-sm transition shadow">もう一度回す</button>
+                <button onclick="startRoulette()" id="roulette-btn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-lg text-sm transition">もう一度回す</button>
             </div>
         </div>
     </div>
 
-    <!-- スクリプト部 -->
+    <!-- スクリプト -->
     <script>
-        // ==========================================
-        // 1. Firebase 設定 & 初期化
-        // ==========================================
         const firebaseConfig = {
-            apiKey: "AIzaSy... (お使いの実際のapiKey)",
+            apiKey: "AIzaSy...",
             authDomain: "nanikuu-v2.firebaseapp.com",
             databaseURL: "https://nanikuu-v2-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "nanikuu-v2",
@@ -330,20 +275,22 @@
             appId: "1:374828190000:web:..."
         };
 
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        
-        function getDatabaseRef() {
-            return firebase.database();
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        function getDatabaseRef() { return firebase.database(); }
 
-        var currentUserName = ''; 
+        var currentUserName = '';
         var allShops = [];
 
-        // ==========================================
-        // 2. 初期化・ユーザー名管理
-        // ==========================================
+        // 地方別の都道府県定義
+        const regionGroups = [
+            { region: "北海道・東北", prefs: ["北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県"] },
+            { region: "関東", prefs: ["茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県"] },
+            { region: "中部", prefs: ["新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県", "岐阜県", "静岡県", "愛知県"] },
+            { region: "近畿", prefs: ["三重県", "滋賀県", "京都府", "大阪府", "兵庫県", "奈良県", "和歌山県"] },
+            { region: "中国・四国", prefs: ["鳥取県", "島根県", "岡山県", "広島県", "山口県", "徳島県", "香川県", "愛媛県", "高知県"] },
+            { region: "九州・沖縄", prefs: ["福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"] }
+        ];
+
         document.addEventListener('DOMContentLoaded', () => {
             initUser();
             loadShops();
@@ -352,27 +299,18 @@
         function closeSplashScreen() {
             const splash = document.getElementById('splash-screen');
             splash.classList.add('opacity-0', 'pointer-events-none');
-            setTimeout(() => {
-                splash.style.display = 'none';
-            }, 700);
+            setTimeout(() => { splash.style.display = 'none'; }, 700);
         }
 
         function initUser() {
             const savedName = localStorage.getItem('nanikuu_web_username');
-            if (savedName) {
-                currentUserName = savedName;
-            } else {
-                promptForUsername(true);
-            }
+            if (savedName) currentUserName = savedName;
+            else promptForUsername(true);
             updateUsernameDisplay();
         }
 
         function promptForUsername(isFirst = false) {
-            const message = isFirst 
-                ? 'WEB版「なにクウ？」へようこそ！\n投稿や「イッタヨ！」で使用するあなたのニックネームを入力してください：'
-                : 'ニックネームを変更してください：';
-            
-            const name = prompt(message, currentUserName || '');
+            const name = prompt(isFirst ? 'ニックネームを入力してください：' : '名前を変更：', currentUserName || '');
             if (name && name.trim() !== '') {
                 currentUserName = name.trim();
                 localStorage.setItem('nanikuu_web_username', currentUserName);
@@ -382,22 +320,14 @@
             }
             updateUsernameDisplay();
         }
-
-        function changeUsername() {
-            promptForUsername(false);
-        }
-
+        function changeUsername() { promptForUsername(false); }
         function updateUsernameDisplay() {
             const el = document.getElementById('display-username');
             if (el) el.textContent = currentUserName;
         }
 
-        // ==========================================
-        // 3. データの読み込み & 日本地図・市区町村フォグゲーム描画
-        // ==========================================
         function loadShops() {
-            const shopsRef = getDatabaseRef().ref('shops');
-            shopsRef.on('value', (snapshot) => {
+            getDatabaseRef().ref('shops').on('value', (snapshot) => {
                 const data = snapshot.val();
                 allShops = [];
                 if (data) {
@@ -406,150 +336,132 @@
                     });
                 }
                 allShops.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-                
                 document.getElementById('loading-spinner').classList.add('hidden');
                 filterShops();
-                updateMapGame(allShops);
-            }, (error) => {
-                console.error(error);
-                document.getElementById('loading-spinner').innerHTML = '<p class="text-red-400 text-xs">データの読み込みに失敗しました。</p>';
+                renderRegionMap();
             });
         }
 
-        function updateMapGame(shops) {
-            // 市区町村レベルでの晴れエリアを収集（都道府県 + 市区町村名）
-            const clearedCitySet = new Set();
-            shops.forEach(shop => {
+        // リアルな都道府県・地方ボードの描画（投稿された市区町村のみ霧が晴れる）
+        function renderRegionMap() {
+            const container = document.getElementById('region-container');
+            container.innerHTML = '';
+
+            // 投稿済みの市区町村マップを作成: pref -> Set(city)
+            const prefClearedMap = {};
+            allShops.forEach(shop => {
                 if (shop.pref && shop.city) {
-                    const uniqueKey = `${shop.pref}_${shop.city.trim()}`;
-                    clearedCitySet.add(uniqueKey);
+                    if (!prefClearedMap[shop.pref]) prefClearedMap[shop.pref] = new Set();
+                    prefClearedMap[shop.pref].add(shop.city.trim());
                 }
             });
 
-            const clearedCount = clearedCitySet.size;
-            document.getElementById('exploration-rate').textContent = `発見率: ${clearedCount} 市区町村`;
-            document.getElementById('map-status-text').textContent = `晴れた市区町村: ${clearedCount} 件`;
+            let totalClearedCities = 0;
+            Object.values(prefClearedMap).forEach(set => totalClearedCities += set.size);
+            document.getElementById('exploration-rate').textContent = `発見市区町村: ${totalClearedCities}件`;
 
-            drawJapanMapCanvas(clearedCitySet);
-        }
+            regionGroups.forEach(group => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = "space-y-1.5";
+                
+                let groupHtml = `<div class="text-xs font-bold text-orange-400 mb-1">${group.region}</div><div class="grid grid-cols-2 sm:grid-cols-4 gap-2">`;
+                
+                group.prefs.forEach(pref => {
+                    const clearedSet = prefClearedMap[pref];
+                    const hasCleared = clearedSet && clearedSet.size > 0;
+                    const countText = hasCleared ? `${clearedSet.size}市区町村晴れ☀️` : '霧の中...';
 
-        // 日本地図＆市区町村レベルの霧（フォグ）グラフィック描画
-        function drawJapanMapCanvas(clearedCitySet) {
-            const canvas = document.getElementById('japan-map-canvas');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // 背景（日本列島をイメージしたダークな深緑・海風のトーン）
-            ctx.fillStyle = '#090d16';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // 日本地図のイラスト風アウトライン（簡易的に日本列島の主要地方ブロックをグリッド配置）
-            const regions = [
-                { name: "北海道", x: 230, y: 15, w: 75, h: 40 },
-                { name: "東北", x: 210, y: 58, w: 55, h: 45 },
-                { name: "関東", x: 190, y: 75, w: 45, h: 40 },
-                { name: "中部", x: 140, y: 70, w: 52, h: 45 },
-                { name: "近畿", x: 100, y: 80, w: 42, h: 40 },
-                { name: "中国・四国", x: 55, y: 82, w: 50, h: 42 },
-                { name: "九州・沖縄", x: 15, y: 85, w: 45, h: 50 }
-            ];
-
-            regions.forEach(reg => {
-                // ブロック単位に登録された市区町村があるかチェック
-                let hasClearedInRegion = false;
-                clearedCitySet.forEach(cityKey => {
-                    // 都道府県や市区町村の文字列に地方名が含まれる、またはデータが存在する場合
-                    hasClearedInRegion = true; // 今回は全体として霧が晴れ進む演出
-                });
-
-                ctx.save();
-                ctx.beginPath();
-                if (typeof ctx.roundRect === 'function') {
-                    ctx.roundRect(reg.x, reg.y, reg.w, reg.h, 6);
-                } else {
-                    ctx.rect(reg.x, reg.y, reg.w, reg.h);
-                }
-
-                if (clearedCitySet.size > 0) {
-                    // 霧が晴れ始めた日本列島
-                    ctx.fillStyle = '#f97316';
-                    ctx.shadowColor = 'rgba(249, 115, 22, 0.6)';
-                    ctx.shadowBlur = 8;
-                    ctx.fill();
-                    ctx.shadowBlur = 0;
-
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 10px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(reg.name, reg.x + reg.w / 2, reg.y + reg.h / 2 - 5);
-
-                    ctx.fillStyle = '#fde047';
-                    ctx.font = '8px sans-serif';
-                    ctx.fillText('晴れエリア有☀️', reg.x + reg.w / 2, reg.y + reg.h / 2 + 8);
-                } else {
-                    // まだ完全な霧（未開拓）
-                    ctx.fillStyle = '#1e293b';
-                    ctx.fill();
-
-                    // スモーク・霧のハッチングパターン
-                    ctx.clip();
-                    ctx.strokeStyle = 'rgba(148, 163, 184, 0.15)';
-                    ctx.lineWidth = 3;
-                    for (let i = -reg.h; i < reg.w + reg.h; i += 6) {
-                        ctx.beginPath();
-                        ctx.moveTo(reg.x + i, reg.y);
-                        ctx.lineTo(reg.x + i + reg.h, reg.y + reg.h);
-                        ctx.stroke();
+                    if (hasCleared) {
+                        // 晴れている都道府県ボタン
+                        groupHtml += `
+                            <button onclick="openPrefDetail('${pref}')" class="bg-gradient-to-br from-orange-500/20 to-amber-600/30 border border-orange-500/60 hover:border-orange-400 p-2 rounded-xl text-left transition flex flex-col justify-between shadow-sm cursor-pointer">
+                                <span class="text-xs font-bold text-white flex items-center justify-between">
+                                    <span>${pref}</span>
+                                    <i class="fa-solid fa-sun text-orange-400 text-[10px]"></i>
+                                </span>
+                                <span class="text-[10px] text-orange-300 mt-1">${countText}</span>
+                            </button>
+                        `;
+                    } else {
+                        // 霧に包まれている都道府県ボタン
+                        groupHtml += `
+                            <button onclick="openPrefDetail('${pref}')" class="fog-pattern border border-dark-border hover:border-dark-muted p-2 rounded-xl text-left transition flex flex-col justify-between opacity-80 cursor-pointer">
+                                <span class="text-xs font-bold text-dark-muted flex items-center justify-between">
+                                    <span>${pref}</span>
+                                    <i class="fa-solid fa-cloud text-dark-muted text-[10px]"></i>
+                                </span>
+                                <span class="text-[10px] text-dark-muted mt-1">未開拓 (タップで確認)</span>
+                            </button>
+                        `;
                     }
-                    ctx.restore();
+                });
+                groupHtml += `</div>`;
+                groupDiv.innerHTML = groupHtml;
+                container.appendChild(groupDiv);
+            });
+        }
 
-                    ctx.fillStyle = 'rgba(100, 116, 139, 0.3)';
-                    ctx.fillRect(reg.x, reg.y, reg.w, reg.h);
+        // 都道府県タップ時：その中の市区町村の霧状況をモーダル表示
+        function openPrefDetail(prefName) {
+            document.getElementById('modal-pref-title').textContent = `${prefName} の開拓状況`;
+            const contentEl = document.getElementById('pref-detail-content');
+            contentEl.innerHTML = '';
 
-                    ctx.fillStyle = '#94a3b8';
-                    ctx.font = '9px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(reg.name, reg.x + reg.w / 2, reg.y + reg.h / 2);
+            const prefShops = allShops.filter(s => s.pref === prefName);
+            const clearedCityMap = {};
+            prefShops.forEach(s => {
+                if (s.city) {
+                    const c = s.city.trim();
+                    if (!clearedCityMap[c]) clearedCityMap[c] = [];
+                    clearedCityMap[c].push(s);
                 }
             });
 
-            // 左側に日本地図のシンボルアイコンを描画
-            ctx.fillStyle = '#334155';
-            ctx.beginPath();
-            ctx.roundRect(10, 15, 110, 60, 8);
-            ctx.fill();
+            const clearedCities = Object.keys(clearedCityMap);
 
-            ctx.fillStyle = '#f97316';
-            ctx.font = 'bold 11px sans-serif';
-            ctx.textAlign = 'left';
-            ctx.fillText('🇯🇵 日本全国制覇', 20, 35);
+            if (clearedCities.length === 0) {
+                contentEl.innerHTML = `
+                    <div class="text-center py-8 space-y-2">
+                        <i class="fa-solid fa-cloud-moon text-3xl text-dark-muted"></i>
+                        <p class="text-sm font-bold text-white">${prefName}はまだ完全に霧に包まれています。</p>
+                        <p class="text-xs text-dark-muted">この地域の市区町村のお店を投稿して、霧を晴らそう！</p>
+                    </div>
+                `;
+            } else {
+                let html = `<p class="text-xs text-dark-muted mb-2">投稿により霧が晴れた市区町村 (${clearedCities.length}件):</p><div class="space-y-2">`;
+                clearedCities.forEach(city => {
+                    const shopsInCity = clearedCityMap[city];
+                    html += `
+                        <div class="bg-dark-input border border-orange-500/30 rounded-xl p-3 space-y-1">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-bold text-orange-400"><i class="fa-solid fa-map-pin mr-1"></i>${city}</span>
+                                <span class="text-[10px] bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-full">晴れ☀️</span>
+                            </div>
+                            <div class="text-[11px] text-dark-muted">登録店舗: ${shopsInCity.map(s => s.name).join(', ')}</div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+                contentEl.innerHTML = html;
+            }
 
-            ctx.fillStyle = '#94a3b8';
-            ctx.font = '9px sans-serif';
-            ctx.fillText(`発見市区町村: ${clearedCitySet.size}件`, 20, 52);
+            document.getElementById('pref-detail-modal').classList.remove('hidden');
         }
 
-        // ==========================================
-        // 4. フィルター & レンダリング
-        // ==========================================
+        function closePrefModal() { document.getElementById('pref-detail-modal').classList.add('hidden'); }
+
         function filterShops() {
             const keyword = document.getElementById('search-keyword').value.toLowerCase();
             const genre = document.getElementById('filter-genre').value;
-            const pref = document.getElementById('filter-pref').value;
 
             const filtered = allShops.filter(shop => {
                 const matchKeyword = !keyword || 
                     (shop.name && shop.name.toLowerCase().includes(keyword)) ||
+                    (shop.pref && shop.pref.toLowerCase().includes(keyword)) ||
                     (shop.city && shop.city.toLowerCase().includes(keyword)) ||
                     (shop.comment && shop.comment.toLowerCase().includes(keyword));
-                
                 const matchGenre = !genre || shop.genre === genre;
-                const matchPref = !pref || shop.pref === pref;
-
-                return matchKeyword && matchGenre && matchPref;
+                return matchKeyword && matchGenre;
             });
 
             renderShops(filtered);
@@ -558,9 +470,7 @@
         function renderShops(shops) {
             const listEl = document.getElementById('shop-list');
             const noDataEl = document.getElementById('no-data');
-            const countEl = document.getElementById('shop-count');
-
-            countEl.textContent = shops.length;
+            document.getElementById('shop-count').textContent = shops.length;
             listEl.innerHTML = '';
 
             if (shops.length === 0) {
@@ -577,12 +487,9 @@
                 const card = document.createElement('div');
                 card.className = "bg-dark-card border border-dark-border rounded-xl overflow-hidden shadow-md flex flex-col justify-between";
                 
-                let imageHtml = '';
-                if (shop.imageUrl) {
-                    imageHtml = `<div class="h-40 w-full overflow-hidden bg-dark-input"><img src="${shop.imageUrl}" class="w-full h-full object-cover hover:scale-105 transition duration-300" alt="${shop.name}"></div>`;
-                } else {
-                    imageHtml = `<div class="h-24 w-full bg-dark-input flex items-center justify-center text-dark-muted"><i class="fa-solid fa-utensils text-2xl opacity-40"></i></div>`;
-                }
+                let imageHtml = shop.imageUrl 
+                    ? `<div class="h-40 w-full overflow-hidden bg-dark-input"><img src="${shop.imageUrl}" class="w-full h-full object-cover"></div>`
+                    : `<div class="h-20 w-full bg-dark-input flex items-center justify-center text-dark-muted"><i class="fa-solid fa-utensils text-xl opacity-40"></i></div>`;
 
                 card.innerHTML = `
                     <div>
@@ -591,16 +498,15 @@
                             <div class="flex justify-between items-start">
                                 <div class="flex flex-wrap gap-1 items-center">
                                     <span class="text-[10px] bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded border border-orange-500/30">${shop.genre || 'その他'}</span>
-                                    <span class="text-[10px] bg-dark-input text-dark-muted px-2 py-0.5 rounded border border-dark-border"><i class="fa-solid fa-map-pin text-orange-400 mr-1"></i>${shop.pref || ''} ${shop.city || ''} (市区町村霧晴れ)</span>
+                                    <span class="text-[10px] bg-dark-input text-dark-muted px-2 py-0.5 rounded border border-dark-border"><i class="fa-solid fa-map-pin text-orange-400 mr-1"></i>${shop.pref || ''} ${shop.city || ''}</span>
                                 </div>
                                 <div class="flex space-x-1">
-                                    <button onclick="openEditModal('${shop.id}')" class="text-dark-muted hover:text-white p-1 text-xs" title="編集"><i class="fa-solid fa-pen"></i></button>
-                                    <button onclick="deleteShop('${shop.id}')" class="text-dark-muted hover:text-red-400 p-1 text-xs" title="削除"><i class="fa-solid fa-trash"></i></button>
+                                    <button onclick="openEditModal('${shop.id}')" class="text-dark-muted hover:text-white p-1 text-xs"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="deleteShop('${shop.id}')" class="text-dark-muted hover:text-red-400 p-1 text-xs"><i class="fa-solid fa-trash"></i></button>
                                 </div>
                             </div>
                             <h3 class="font-bold text-base text-gray-100">${escapeHtml(shop.name)}</h3>
                             ${shop.comment ? `<p class="text-xs text-dark-muted line-clamp-2">${escapeHtml(shop.comment)}</p>` : ''}
-                            ${shop.url ? `<a href="${escapeHtml(shop.url)}" target="_blank" class="text-xs text-orange-400 hover:underline inline-flex items-center space-x-1 pt-1"><i class="fa-solid fa-external-link-alt text-[10px]"></i><span>外部サイト・マップへ</span></a>` : ''}
                         </div>
                     </div>
                     <div class="p-4 pt-0 border-t border-dark-border/40 mt-3 flex justify-between items-center bg-dark-card/50">
@@ -615,12 +521,8 @@
             });
         }
 
-        // ==========================================
-        // 5. モーダル制御 & 保存処理
-        // ==========================================
         function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); }
         function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); }
-
         function openAddModal() {
             document.getElementById('modal-title').textContent = 'お店を追加する';
             document.getElementById('edit-shop-id').value = '';
@@ -634,7 +536,6 @@
             document.getElementById('image-upload-progress').classList.add('hidden');
             document.getElementById('shop-modal').classList.remove('hidden');
         }
-
         function openEditModal(id) {
             const shop = allShops.find(s => s.id === id);
             if (!shop) return;
@@ -646,11 +547,8 @@
             document.getElementById('shop-city').value = shop.city || '';
             document.getElementById('shop-comment').value = shop.comment || '';
             document.getElementById('shop-url').value = shop.url || '';
-            document.getElementById('shop-image').value = '';
-            document.getElementById('image-upload-progress').classList.add('hidden');
             document.getElementById('shop-modal').classList.remove('hidden');
         }
-
         function closeModal() { document.getElementById('shop-modal').classList.add('hidden'); }
 
         async function saveShop() {
@@ -663,14 +561,8 @@
             const url = document.getElementById('shop-url').value.trim();
             const imageFile = document.getElementById('shop-image').files[0];
 
-            if (!name) {
-                alert('店名を入力してください。');
-                return;
-            }
-            if (!city) {
-                alert('市区町村名を入力してください（細かい霧を晴らすため必須です）。');
-                return;
-            }
+            if (!name) { alert('店名を入力してください。'); return; }
+            if (!city) { alert('市区町村名を入力してください（霧を晴らすために必要です）。'); return; }
 
             const saveBtn = document.getElementById('save-btn');
             saveBtn.disabled = true;
@@ -683,18 +575,12 @@
                     const existing = allShops.find(s => s.id === id);
                     if (existing && existing.imageUrl) imageUrl = existing.imageUrl;
                 }
-
                 if (imageFile) {
                     const resizedBlob = await resizeImage(imageFile, 250, 250, 0.4);
                     imageUrl = await convertBlobToBase64(resizedBlob);
                 }
 
-                const shopData = {
-                    name, genre, pref, city, comment, url, imageUrl,
-                    author: currentUserName,
-                    updatedAt: firebase.database.ServerValue.TIMESTAMP
-                };
-
+                const shopData = { name, genre, pref, city, comment, url, imageUrl, author: currentUserName };
                 const shopsRef = getDatabaseRef().ref('shops');
                 if (id) {
                     await shopsRef.child(id).update(shopData);
@@ -702,11 +588,9 @@
                     shopData.createdAt = firebase.database.ServerValue.TIMESTAMP;
                     await shopsRef.push(shopData);
                 }
-
                 closeModal();
             } catch (e) {
-                console.error('詳細エラー:', e);
-                alert('保存に失敗しました。\nエラー内容: ' + (e.message || e));
+                alert('保存に失敗しました: ' + (e.message || e));
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.textContent = '保存する';
@@ -715,119 +599,76 @@
         }
 
         function deleteShop(id) {
-            if (confirm('このお店の情報を削除してもよろしいですか？')) {
-                getDatabaseRef().ref(`shops/${id}`).remove();
-            }
+            if (confirm('このお店を削除しますか？')) getDatabaseRef().ref(`shops/${id}`).remove();
         }
 
-        // ==========================================
-        // 6. 「イッタヨ！」機能
-        // ==========================================
         function toggleItayo(shopId) {
             const shopRef = getDatabaseRef().ref(`shops/${shopId}/itayo`);
             shopRef.once('value', (snapshot) => {
-                const itayoData = snapshot.val() || {};
-                let userKeyToToggle = null;
-                Object.keys(itayoData).forEach(key => {
-                    if (itayoData[key] === currentUserName) userKeyToToggle = key;
-                });
-                if (userKeyToToggle) {
-                    shopRef.child(userKeyToToggle).remove();
-                } else {
-                    shopRef.push(currentUserName);
-                }
+                const data = snapshot.val() || {};
+                let userKey = null;
+                Object.keys(data).forEach(k => { if (data[k] === currentUserName) userKey = k; });
+                if (userKey) shopRef.child(userKey).remove();
+                else shopRef.push(currentUserName);
             });
         }
 
-        // ==========================================
-        // 7. ガチャ（ルーレット）機能
-        // ==========================================
         function openRouletteModal() {
-            if (allShops.length === 0) {
-                alert('お店がまだ登録されていません。');
-                return;
-            }
+            if (allShops.length === 0) { alert('お店がありません。'); return; }
             document.getElementById('roulette-modal').classList.remove('hidden');
             startRoulette();
         }
-
         function closeRouletteModal() { document.getElementById('roulette-modal').classList.add('hidden'); }
-
         function startRoulette() {
-            const rouletteText = document.getElementById('roulette-text');
-            const rouletteSub = document.getElementById('roulette-sub');
-            const rouletteBtn = document.getElementById('roulette-btn');
-            
-            rouletteBtn.disabled = true;
-            rouletteText.classList.add('slot-animation');
-
+            const textEl = document.getElementById('roulette-text');
+            const subEl = document.getElementById('roulette-sub');
+            const btnEl = document.getElementById('roulette-btn');
+            btnEl.disabled = true;
             let count = 0;
-            const maxCount = 20;
             const timer = setInterval(() => {
-                const randomShop = allShops[Math.floor(Math.random() * allShops.length)];
-                rouletteText.textContent = randomShop.name;
-                rouletteSub.textContent = `${randomShop.genre} / ${randomShop.pref} ${randomShop.city || ''}`;
+                const rand = allShops[Math.floor(Math.random() * allShops.length)];
+                textEl.textContent = rand.name;
+                subEl.textContent = `${rand.genre} / ${rand.pref} ${rand.city}`;
                 count++;
-
-                if (count >= maxCount) {
+                if (count >= 15) {
                     clearInterval(timer);
-                    rouletteText.classList.remove('slot-animation');
-                    const finalShop = allShops[Math.floor(Math.random() * allShops.length)];
-                    rouletteText.textContent = finalShop.name;
-                    rouletteSub.textContent = `${finalShop.genre} / ${finalShop.pref} ${finalShop.city || ''} 🎉`;
-                    rouletteBtn.disabled = false;
+                    btnEl.disabled = false;
                 }
             }, 80);
         }
 
-        // ==========================================
-        // 8. ユーティリティ（画像圧縮・Base64変換）
-        // ==========================================
         function resizeImage(file, maxWidth, maxHeight, quality) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const img = new Image();
                     img.onload = () => {
-                        let width = img.width;
-                        let height = img.height;
-                        if (width > height) {
-                            if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
-                        } else {
-                            if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; }
-                        }
+                        let w = img.width, h = img.height;
+                        if (w > h) { if (w > maxWidth) { h *= maxWidth/w; w = maxWidth; } }
+                        else { if (h > maxHeight) { w *= maxHeight/h; h = maxHeight; } }
                         const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
+                        canvas.width = w; canvas.height = h;
                         const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        canvas.toBlob((blob) => { 
-                            if (blob) resolve(blob);
-                            else reject(new Error('Blob creation failed'));
-                        }, 'image/jpeg', quality);
+                        ctx.drawImage(img, 0, 0, w, h);
+                        canvas.toBlob(blob => resolve(blob), 'image/jpeg', quality);
                     };
-                    img.onerror = (err) => reject(err);
                     img.src = e.target.result;
                 };
-                reader.onerror = (err) => reject(err);
+                reader.onerror = reject;
                 reader.readAsDataURL(file);
             });
         }
-
         function convertBlobToBase64(blob) {
             return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = (err) => reject(err);
-                reader.readAsDataURL(blob);
+                const r = new FileReader();
+                r.onloadend = () => resolve(r.result);
+                r.onerror = reject;
+                r.readAsDataURL(blob);
             });
         }
-
         function escapeHtml(str) {
             if (!str) return '';
-            return str.replace(/[&'`"<>]/g, (match) => {
-                return { '&': '&amp;', QUOTE: '&#x27;', '`': '&#x60;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[match];
-            });
+            return str.replace(/[&'`"<>]/g, (m) => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[m]));
         }
     </script>
 </body>
