@@ -304,7 +304,7 @@
     <!-- スクリプト部 -->
     <script>
         // ==========================================
-        // 1. Firebase 設定 & グローバル変数（一番上に移動）
+        // 1. Firebase 設定 & 初期化（安全対策版）
         // ==========================================
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
@@ -316,10 +316,17 @@
             appId: "YOUR_APP_ID"
         };
 
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        // Firebaseが二重初期化されないように安全にチェック
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        // データベースインスタンスを確実に取得する関数
+        function getDatabaseRef() {
+            return firebase.database();
+        }
 
-        var currentUserName = ''; // ★ここに移動して初期化エラーを防止
+        var currentUserName = ''; 
         var allShops = [];
 
         const prefecturesList = [
@@ -387,7 +394,7 @@
         // 3. データの読み込み & 地図ゲーム描画
         // ==========================================
         function loadShops() {
-            const shopsRef = database.ref('shops');
+            const shopsRef = getDatabaseRef().ref('shops');
             shopsRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 allShops = [];
@@ -638,7 +645,7 @@
                     updatedAt: firebase.database.ServerValue.TIMESTAMP
                 };
 
-                const shopsRef = database.ref('shops');
+                const shopsRef = getDatabaseRef().ref('shops');
                 if (id) {
                     await shopsRef.child(id).update(shopData);
                 } else {
@@ -659,7 +666,7 @@
 
         function deleteShop(id) {
             if (confirm('このお店の情報を削除してもよろしいですか？')) {
-                database.ref(`shops/${id}`).remove();
+                getDatabaseRef().ref(`shops/${id}`).remove();
             }
         }
 
@@ -667,7 +674,7 @@
         // 6. 「イッタヨ！」機能
         // ==========================================
         function toggleItayo(shopId) {
-            const shopRef = database.ref(`shops/${shopId}/itayo`);
+            const shopRef = getDatabaseRef().ref(`shops/${shopId}/itayo`);
             shopRef.once('value', (snapshot) => {
                 const itayoData = snapshot.val() || {};
                 let userKeyToToggle = null;
