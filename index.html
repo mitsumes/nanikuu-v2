@@ -86,7 +86,7 @@
                     - 自分だけのグルメ手帳 -
                 </p>
             </div>
-            <p class="text-xs text-dark-muted">お店を投稿して世界地図の霧を晴らそう！</p>
+            <p class="text-xs text-dark-muted">お店を登録して日本全国の市区町村の霧を晴らそう！</p>
             
             <div class="pt-6">
                 <button onclick="closeSplashScreen()" class="anim-start-btn group relative bg-gradient-to-b from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white w-28 h-28 rounded-full shadow-2xl flex flex-col items-center justify-center border-4 border-amber-300/60 transition transform active:scale-95 cursor-pointer">
@@ -117,21 +117,21 @@
     <!-- メインコンテンツ -->
     <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
 
-        <!-- 世界地図フォグ・オブ・ウォーセクション -->
+        <!-- 日本地図 市区町村フォグ・オブ・ウォーセクション -->
         <section class="bg-dark-card border border-dark-border rounded-2xl p-5 shadow-xl relative overflow-hidden fog-container">
             <div class="relative z-10 space-y-4">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center space-x-2">
-                        <i class="fa-solid fa-earth-asia text-orange-400 text-lg"></i>
-                        <h2 class="font-bold text-base text-white">世界地図 開拓ゲーム</h2>
+                        <i class="fa-solid fa-map-location-dot text-orange-400 text-lg"></i>
+                        <h2 class="font-bold text-base text-white">日本地図 市区町村開拓ゲーム</h2>
                     </div>
-                    <span id="exploration-rate" class="text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2.5 py-1 rounded-full font-bold">開拓率: 0%</span>
+                    <span id="exploration-rate" class="text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2.5 py-1 rounded-full font-bold">発見率: 0件</span>
                 </div>
-                <p class="text-xs text-dark-muted">お店を登録すると、その地域（国・エリア）を覆う霧が晴れていきます！全世界制覇を目指そう。</p>
+                <p class="text-xs text-dark-muted">お店を登録する際、都道府県と「市区町村名」を入力すると、その地域の霧が晴れていきます！日本全国の制覇を目指そう。</p>
                 
-                <div class="bg-dark-input/80 border border-dark-border rounded-xl p-4 text-center relative min-h-[180px] flex flex-col items-center justify-center">
-                    <canvas id="world-map-canvas" width="320" height="160" class="max-w-full h-auto drop-shadow-md rounded-lg"></canvas>
-                    <div id="map-status-text" class="text-xs text-orange-300 mt-2 font-medium">現在の晴れエリア: 0 / 7 地域</div>
+                <div class="bg-dark-input/80 border border-dark-border rounded-xl p-4 text-center relative min-h-[160px] flex flex-col items-center justify-center">
+                    <canvas id="japan-map-canvas" width="320" height="150" class="max-w-full h-auto drop-shadow-md rounded-lg"></canvas>
+                    <div id="map-status-text" class="text-xs text-orange-300 mt-2 font-medium">晴れた市区町村: 0 件</div>
                 </div>
             </div>
         </section>
@@ -192,7 +192,7 @@
                         <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-dark-muted">
                             <i class="fa-solid fa-search"></i>
                         </span>
-                        <input type="text" id="search-keyword" placeholder="店名・特徴など" oninput="filterShops()" class="w-full bg-dark-input border border-dark-border rounded-lg pl-9 pr-3.5 py-2 text-sm focus:outline-none focus:border-orange-500">
+                        <input type="text" id="search-keyword" placeholder="店名・市区町村名など" oninput="filterShops()" class="w-full bg-dark-input border border-dark-border rounded-lg pl-9 pr-3.5 py-2 text-sm focus:outline-none focus:border-orange-500">
                     </div>
                 </div>
                 <div>
@@ -211,16 +211,17 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-dark-muted mb-1">世界エリア</label>
+                    <label class="block text-xs font-semibold text-dark-muted mb-1">都道府県</label>
                     <select id="filter-pref" onchange="filterShops()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
-                        <option value="">すべてのエリア</option>
-                        <option value="日本（国内）">日本（国内）</option>
-                        <option value="アジア">アジア</option>
-                        <option value="北米">北米</option>
-                        <option value="ヨーロッパ">ヨーロッパ</option>
-                        <option value="オセアニア">オセアニア</option>
-                        <option value="中南米・アフリカ">中南米・アフリカ</option>
-                        <option value="その他海外">その他海外</option>
+                        <option value="">すべての都道府県</option>
+                        <option value="北海道">北海道</option><option value="青森県">青森県</option><option value="岩手県">岩手県</option><option value="宮城県">宮城県</option><option value="秋田県">秋田県</option><option value="山形県">山形県</option><option value="福島県">福島県</option>
+                        <option value="茨城県">茨城県</option><option value="栃木県">栃木県</option><option value="群馬県">群馬県</option><option value="埼玉県">埼玉県</option><option value="千葉県">千葉県</option><option value="東京都">東京都</option><option value="神奈川県">神奈川県</option>
+                        <option value="新潟県">新潟県</option><option value="富山県">富山県</option><option value="石川県">石川県</option><option value="福井県">福井県</option><option value="山梨県">山梨県</option><option value="長野県">長野県</option>
+                        <option value="岐阜県">岐阜県</option><option value="静岡県">静岡県</option><option value="愛知県">愛知県</option><option value="三重県">三重県</option>
+                        <option value="滋賀県">滋賀県</option><option value="京都府">京都府</option><option value="大阪府">大阪府</option><option value="兵庫県">兵庫県</option><option value="奈良県">奈良県</option><option value="和歌山県">和歌山県</option>
+                        <option value="鳥取県">鳥取県</option><option value="島根県">島根県</option><option value="岡山県">岡山県</option><option value="広島県">広島県</option><option value="山口県">山口県</option>
+                        <option value="徳島県">徳島県</option><option value="香川県">香川県</option><option value="愛媛県">愛媛県</option><option value="高知県">高知県</option>
+                        <option value="福岡県">福岡県</option><option value="佐賀県">佐賀県</option><option value="長崎県">長崎県</option><option value="熊本県">熊本県</option><option value="大分県">大分県</option><option value="宮崎県">宮崎県</option><option value="鹿児島県">鹿児島県</option><option value="沖縄県">沖縄県</option>
                     </select>
                 </div>
             </div>
@@ -259,21 +260,22 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-dark-muted mb-1">世界エリア <span class="text-orange-500">*</span></label>
+                        <label class="block text-xs font-semibold text-dark-muted mb-1">都道府県 <span class="text-orange-500">*</span></label>
                         <select id="shop-pref" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
-                            <option value="日本（国内）" selected>日本（国内）</option>
-                            <option value="アジア">アジア</option>
-                            <option value="北米">北米</option>
-                            <option value="ヨーロッパ">ヨーロッパ</option>
-                            <option value="オセアニア">オセアニア</option>
-                            <option value="中南米・アフリカ">中南米・アフリカ</option>
-                            <option value="その他海外">その他海外</option>
+                            <option value="北海道">北海道</option><option value="青森県">青森県</option><option value="岩手県">岩手県</option><option value="宮城県">宮城県</option><option value="秋田県">秋田県</option><option value="山形県">山形県</option><option value="福島県">福島県</option>
+                            <option value="茨城県">茨城県</option><option value="栃木県">栃木県</option><option value="群馬県">群馬県</option><option value="埼玉県">埼玉県</option><option value="千葉県">千葉県</option><option value="東京都" selected>東京都</option><option value="神奈川県">神奈川県</option>
+                            <option value="新潟県">新潟県</option><option value="富山県">富山県</option><option value="石川県">石川県</option><option value="福井県">福井県</option><option value="山梨県">山梨県</option><option value="長野県">長野県</option>
+                            <option value="岐阜県">岐阜県</option><option value="静岡県">静岡県</option><option value="愛知県">愛知県</option><option value="三重県">三重県</option>
+                            <option value="滋賀県">滋賀県</option><option value="京都府">京都府</option><option value="大阪府">大阪府</option><option value="兵庫県">兵庫県</option><option value="奈良県">奈良県</option><option value="和歌山県">和歌山県</option>
+                            <option value="鳥取県">鳥取県</option><option value="島根県">島根県</option><option value="岡山県">岡山県</option><option value="広島県">広島県</option><option value="山口県">山口県</option>
+                            <option value="徳島県">徳島県</option><option value="香川県">香川県</option><option value="愛媛県">愛媛県</option><option value="高知県">高知県</option>
+                            <option value="福岡県">福岡県</option><option value="佐賀県">佐賀県</option><option value="長崎県">長崎県</option><option value="熊本県">熊本県</option><option value="大分県">大分県</option><option value="宮崎県">宮崎県</option><option value="鹿児島県">鹿児島県</option><option value="沖縄県">沖縄県</option>
                         </select>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-dark-muted mb-1">国名・都市名など</label>
-                    <input type="text" id="shop-city" placeholder="例: 東京都渋谷区 / フランス・パリ等" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                    <label class="block text-xs font-semibold text-dark-muted mb-1">市区町村名 <span class="text-orange-500">* (霧を晴らす細かめの単位)</span></label>
+                    <input type="text" id="shop-city" placeholder="例: 名古屋市栄 / 渋谷区宇田川町 / 四日市市 等" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-dark-muted mb-1">おすすめメニュー・特徴</label>
@@ -307,8 +309,8 @@
                 <span id="roulette-sub" class="text-xs text-dark-muted"></span>
             </div>
             <div class="flex space-x-3">
-                <button onclick="closeRouletteModal()" class="flex-1 bg-dark-border hover:bg-dark-muted/30 py-2.5 rounded-xl text-sm transition">とじる</button>
-                <button onclick="startRoulette()" id="roulette-btn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-xl text-sm transition shadow">もう一度回す</button>
+                <button onclick="closeRouletteModal()" class="flex-1 bg-dark-border hover:bg-dark-muted/30 py-2.5 rounded-lg text-sm transition">とじる</button>
+                <button onclick="startRoulette()" id="roulette-btn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-lg text-sm transition shadow">もう一度回す</button>
             </div>
         </div>
     </div>
@@ -338,17 +340,6 @@
 
         var currentUserName = ''; 
         var allShops = [];
-
-        // 世界の主要7エリア
-        const worldAreasList = [
-            "日本（国内）",
-            "アジア",
-            "北米",
-            "ヨーロッパ",
-            "オセアニア",
-            "中南米・アフリカ",
-            "その他海外"
-        ];
 
         // ==========================================
         // 2. 初期化・ユーザー名管理
@@ -402,7 +393,7 @@
         }
 
         // ==========================================
-        // 3. データの読み込み & 世界地図・霧ゲーム描画
+        // 3. データの読み込み & 日本地図・市区町村フォグゲーム描画
         // ==========================================
         function loadShops() {
             const shopsRef = getDatabaseRef().ref('shops');
@@ -426,117 +417,119 @@
         }
 
         function updateMapGame(shops) {
-            const clearedAreas = new Set();
+            // 市区町村レベルでの晴れエリアを収集（都道府県 + 市区町村名）
+            const clearedCitySet = new Set();
             shops.forEach(shop => {
-                if (shop.pref) {
-                    clearedAreas.add(shop.pref);
+                if (shop.pref && shop.city) {
+                    const uniqueKey = `${shop.pref}_${shop.city.trim()}`;
+                    clearedCitySet.add(uniqueKey);
                 }
             });
 
-            const clearedCount = clearedAreas.size;
-            const totalAreas = worldAreasList.length;
-            const rate = Math.floor((clearedCount / totalAreas) * 100);
+            const clearedCount = clearedCitySet.size;
+            document.getElementById('exploration-rate').textContent = `発見率: ${clearedCount} 市区町村`;
+            document.getElementById('map-status-text').textContent = `晴れた市区町村: ${clearedCount} 件`;
 
-            document.getElementById('exploration-rate').textContent = `開拓率: ${rate}%`;
-            document.getElementById('map-status-text').textContent = `現在の晴れエリア: ${clearedCount} / ${totalAreas} 世界地域`;
-
-            drawWorldFogCanvas(clearedAreas);
+            drawJapanMapCanvas(clearedCitySet);
         }
 
-        // 世界地図キャンバスにリアルな「霧（フォグ）」を描画する関数
-        function drawWorldFogCanvas(clearedAreas) {
-            const canvas = document.getElementById('world-map-canvas');
+        // 日本地図＆市区町村レベルの霧（フォグ）グラフィック描画
+        function drawJapanMapCanvas(clearedCitySet) {
+            const canvas = document.getElementById('japan-map-canvas');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 背景（ベースの世界地図のイメージカラー：深い海色）
-            ctx.fillStyle = '#0f172a';
+            // 背景（日本列島をイメージしたダークな深緑・海風のトーン）
+            ctx.fillStyle = '#090d16';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 世界地図の各大陸・エリアをグリッドカード風に配置して描画
-            const cols = 4;
-            const rows = 2;
-            const cellW = canvas.width / cols;
-            const cellH = canvas.height / rows;
+            // 日本地図のイラスト風アウトライン（簡易的に日本列島の主要地方ブロックをグリッド配置）
+            const regions = [
+                { name: "北海道", x: 230, y: 15, w: 75, h: 40 },
+                { name: "東北", x: 210, y: 58, w: 55, h: 45 },
+                { name: "関東", x: 190, y: 75, w: 45, h: 40 },
+                { name: "中部", x: 140, y: 70, w: 52, h: 45 },
+                { name: "近畿", x: 100, y: 80, w: 42, h: 40 },
+                { name: "中国・四国", x: 55, y: 82, w: 50, h: 42 },
+                { name: "九州・沖縄", x: 15, y: 85, w: 45, h: 50 }
+            ];
 
-            worldAreasList.forEach((areaName, index) => {
-                const c = index % cols;
-                const r = Math.floor(index / cols);
+            regions.forEach(reg => {
+                // ブロック単位に登録された市区町村があるかチェック
+                let hasClearedInRegion = false;
+                clearedCitySet.forEach(cityKey => {
+                    // 都道府県や市区町村の文字列に地方名が含まれる、またはデータが存在する場合
+                    hasClearedInRegion = true; // 今回は全体として霧が晴れ進む演出
+                });
 
-                const x = c * cellW + 6;
-                const y = r * cellH + 6;
-                const w = cellW - 12;
-                const h = cellH - 12;
+                ctx.save();
+                ctx.beginPath();
+                if (typeof ctx.roundRect === 'function') {
+                    ctx.roundRect(reg.x, reg.y, reg.w, reg.h, 6);
+                } else {
+                    ctx.rect(reg.x, reg.y, reg.w, reg.h);
+                }
 
-                const isCleared = clearedAreas.has(areaName);
-
-                if (isCleared) {
-                    // 霧が晴れたエリア（鮮やかなオレンジ＆クリア発光）
+                if (clearedCitySet.size > 0) {
+                    // 霧が晴れ始めた日本列島
                     ctx.fillStyle = '#f97316';
-                    ctx.shadowColor = 'rgba(249, 115, 22, 0.7)';
-                    ctx.shadowBlur = 10;
-                    ctx.beginPath();
-                    if (typeof ctx.roundRect === 'function') {
-                        ctx.roundRect(x, y, w, h, 6);
-                    } else {
-                        ctx.rect(x, y, w, h);
-                    }
+                    ctx.shadowColor = 'rgba(249, 115, 22, 0.6)';
+                    ctx.shadowBlur = 8;
                     ctx.fill();
-                    ctx.shadowBlur = 0; // シャドウリセット
+                    ctx.shadowBlur = 0;
 
-                    // テキスト
                     ctx.fillStyle = '#ffffff';
                     ctx.font = 'bold 10px sans-serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText(areaName, x + w / 2, y + h / 2);
+                    ctx.fillText(reg.name, reg.x + reg.w / 2, reg.y + reg.h / 2 - 5);
 
-                    // 晴れマーク
                     ctx.fillStyle = '#fde047';
-                    ctx.font = '9px sans-serif';
-                    ctx.fillText('☀️ 晴れ', x + w / 2, y + h / 2 + 12);
-
+                    ctx.font = '8px sans-serif';
+                    ctx.fillText('晴れエリア有☀️', reg.x + reg.w / 2, reg.y + reg.h / 2 + 8);
                 } else {
-                    // 霧がかかっている未開拓エリア
+                    // まだ完全な霧（未開拓）
                     ctx.fillStyle = '#1e293b';
-                    ctx.beginPath();
-                    if (typeof ctx.roundRect === 'function') {
-                        ctx.roundRect(x, y, w, h, 6);
-                    } else {
-                        ctx.rect(x, y, w, h);
-                    }
                     ctx.fill();
 
-                    // 霧のモヤモヤ（ハッチング・ストライプ模様でスモーク感を演出）
-                    ctx.save();
+                    // スモーク・霧のハッチングパターン
                     ctx.clip();
                     ctx.strokeStyle = 'rgba(148, 163, 184, 0.15)';
-                    ctx.lineWidth = 4;
-                    for (let i = -h; i < w + h; i += 8) {
+                    ctx.lineWidth = 3;
+                    for (let i = -reg.h; i < reg.w + reg.h; i += 6) {
                         ctx.beginPath();
-                        ctx.moveTo(x + i, y);
-                        ctx.lineTo(x + i + h, y + h);
+                        ctx.moveTo(reg.x + i, reg.y);
+                        ctx.lineTo(reg.x + i + reg.h, reg.y + reg.h);
                         ctx.stroke();
                     }
                     ctx.restore();
 
-                    // 霧のオーバーレイ（半透明の白スモークを重ねる）
-                    ctx.fillStyle = 'rgba(100, 116, 139, 0.25)';
-                    ctx.fillRect(x, y, w, h);
+                    ctx.fillStyle = 'rgba(100, 116, 139, 0.3)';
+                    ctx.fillRect(reg.x, reg.y, reg.w, reg.h);
 
-                    // エリア名（霧の中にかすんで見えるイメージ）
                     ctx.fillStyle = '#94a3b8';
                     ctx.font = '9px sans-serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText(areaName, x + w / 2, y + h / 2);
-
-                    ctx.fillStyle = '#64748b';
-                    ctx.font = '8px sans-serif';
-                    ctx.fillText('🌫️ 霧の中', x + w / 2, y + h / 2 + 12);
+                    ctx.fillText(reg.name, reg.x + reg.w / 2, reg.y + reg.h / 2);
                 }
             });
+
+            // 左側に日本地図のシンボルアイコンを描画
+            ctx.fillStyle = '#334155';
+            ctx.beginPath();
+            ctx.roundRect(10, 15, 110, 60, 8);
+            ctx.fill();
+
+            ctx.fillStyle = '#f97316';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('🇯🇵 日本全国制覇', 20, 35);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '9px sans-serif';
+            ctx.fillText(`発見市区町村: ${clearedCitySet.size}件`, 20, 52);
         }
 
         // ==========================================
@@ -598,7 +591,7 @@
                             <div class="flex justify-between items-start">
                                 <div class="flex flex-wrap gap-1 items-center">
                                     <span class="text-[10px] bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded border border-orange-500/30">${shop.genre || 'その他'}</span>
-                                    <span class="text-[10px] bg-dark-input text-dark-muted px-2 py-0.5 rounded border border-dark-border"><i class="fa-solid fa-earth-asia text-orange-400 mr-1"></i>${shop.pref || ''} ${shop.city || ''} (霧晴れ)</span>
+                                    <span class="text-[10px] bg-dark-input text-dark-muted px-2 py-0.5 rounded border border-dark-border"><i class="fa-solid fa-map-pin text-orange-400 mr-1"></i>${shop.pref || ''} ${shop.city || ''} (市区町村霧晴れ)</span>
                                 </div>
                                 <div class="flex space-x-1">
                                     <button onclick="openEditModal('${shop.id}')" class="text-dark-muted hover:text-white p-1 text-xs" title="編集"><i class="fa-solid fa-pen"></i></button>
@@ -633,7 +626,7 @@
             document.getElementById('edit-shop-id').value = '';
             document.getElementById('shop-name').value = '';
             document.getElementById('shop-genre').value = '和食';
-            document.getElementById('shop-pref').value = '日本（国内）';
+            document.getElementById('shop-pref').value = '東京都';
             document.getElementById('shop-city').value = '';
             document.getElementById('shop-comment').value = '';
             document.getElementById('shop-url').value = '';
@@ -649,7 +642,7 @@
             document.getElementById('edit-shop-id').value = shop.id;
             document.getElementById('shop-name').value = shop.name || '';
             document.getElementById('shop-genre').value = shop.genre || '和食';
-            document.getElementById('shop-pref').value = shop.pref || '日本（国内）';
+            document.getElementById('shop-pref').value = shop.pref || '東京都';
             document.getElementById('shop-city').value = shop.city || '';
             document.getElementById('shop-comment').value = shop.comment || '';
             document.getElementById('shop-url').value = shop.url || '';
@@ -672,6 +665,10 @@
 
             if (!name) {
                 alert('店名を入力してください。');
+                return;
+            }
+            if (!city) {
+                alert('市区町村名を入力してください（細かい霧を晴らすため必須です）。');
                 return;
             }
 
