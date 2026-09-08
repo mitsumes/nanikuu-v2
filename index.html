@@ -93,9 +93,10 @@
 <body class="min-h-screen pb-32">
 
     <svg style="display:none;">
-        <filter id="cloud-filter">
-            <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" result="noise" />
-            <feColorMatrix type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 1.2 0" in="noise" result="monoNoise" />
+        <filter id="cloud-filter" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="25" xChannelSelector="R" yChannelSelector="G" result="displacement" />
+            <feGaussianBlur in="displacement" stdDeviation="8" result="blur" />
             <feComposite operator="in" in2="SourceGraphic" />
         </filter>
     </svg>
@@ -147,18 +148,18 @@
                     </div>
                     <span id="exploration-rate" class="text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2.5 py-1 rounded-full font-bold">開拓スポット: 0件</span>
                 </div>
-                <p class="text-xs text-dark-muted">お店を登録すると、衝撃波でその周辺の雲がギザギザに吹き飛びます！</p>
+                <p class="text-xs text-dark-muted">お店を登録すると、ふわっと柔らかくその周辺の雲が晴れていきます！</p>
                 
                 <div class="relative rounded-2xl overflow-hidden border border-dark-border shadow-inner">
                     <div id="map"></div>
                     <div id="cloud-base" class="cloud-base-overlay"></div>
                     <div id="cloud-fog" class="cloud-fog-layer"></div>
-                    <!-- 雲穴あけ用SVG (ギザギザの雷・衝撃波風) -->
+                    <!-- 雲穴あけ用SVG (ふわふわのフィルター適用) -->
                     <svg id="cloud-svg-overlay">
                         <defs>
                             <mask id="cloud-mask">
                                 <rect width="100%" height="100%" fill="white" />
-                                <g id="cloud-holes"></g>
+                                <g id="cloud-holes" filter="url(#cloud-filter)"></g>
                             </mask>
                         </defs>
                         <rect width="100%" height="100%" fill="rgba(200, 210, 225, 0.65)" mask="url(#cloud-mask)" />
@@ -167,7 +168,7 @@
                     <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none w-11/12 max-w-xs">
                         <div class="bg-black/80 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 shadow-2xl text-center">
                             <p class="text-xs font-bold text-white tracking-widest flex items-center justify-center">
-                                <i class="fa-solid fa-cloud-bolt text-orange-400 mr-2 animate-bounce"></i>雲をぶっとばそう！
+                                <i class="fa-solid fa-cloud-sun text-orange-400 mr-2"></i>雲を晴らそう！
                             </p>
                         </div>
                     </div>
@@ -475,7 +476,7 @@
             });
         }
 
-        // 雲をギザギザの衝撃波・雷型にくり抜く関数
+        // 雲を「ふわふわ」と柔らかく丸くくり抜く関数
         function updateCloudHoles() {
             const holesGroup = document.getElementById('cloud-holes');
             if (!holesGroup || !map) return;
@@ -487,24 +488,14 @@
                     validCount++;
                     const point = map.latLngToContainerPoint([shop.lat, shop.lng]);
                     const metersPerPixel = 40075016.686 * Math.cos(shop.lat * Math.PI / 180) / Math.pow(2, map.getZoom() + 8);
-                    const baseRadius = Math.max(20, Math.min(320, 1000 / metersPerPixel));
+                    const radius = Math.max(30, Math.min(220, 900 / metersPerPixel));
 
-                    // ギザギザの多角形（スターバースト・雷型）の頂点を計算してパスを作る
-                    const points = [];
-                    const spikes = 12; // ギザギザの数
-                    for (let i = 0; i < spikes * 2; i++) {
-                        const angle = (i * Math.PI) / spikes;
-                        // 偶数番目は外側、奇数番目は内側に凹ませて雷・衝撃波のようなギザギザ感を出す
-                        const r = (i % 2 === 0) ? baseRadius : baseRadius * 0.65;
-                        const x = point.x + r * Math.cos(angle);
-                        const y = point.y + r * Math.sin(angle);
-                        points.push(`${x},${y}`);
-                    }
-
-                    const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-                    polygon.setAttribute('points', points.join(' '));
-                    polygon.setAttribute('fill', 'black');
-                    holesGroup.appendChild(polygon);
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', point.x);
+                    circle.setAttribute('cy', point.y);
+                    circle.setAttribute('r', radius);
+                    circle.setAttribute('fill', 'black');
+                    holesGroup.appendChild(circle);
                 }
             });
 
@@ -625,11 +616,15 @@
         }
         function closeModal() { document.getElementById('shop-modal').classList.add('hidden'); }
 
-        // より正確に位置情報を取得するための改善版ジオコーディング
+        // より正確に住所を一致させるためのジオコーディング処理
         async function getLatLngFromAddress(pref, city, address) {
+            const cleanCity = city.trim();
+            const cleanAddress = address.trim();
+            
             const queries = [
-                pref + city + address,
-                pref + city,
+                `${pref} ${cleanCity} ${cleanAddress}`,
+                `${pref}${cleanCity}${cleanAddress}`,
+                `${pref} ${cleanCity}`,
                 pref
             ];
 
