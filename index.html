@@ -48,11 +48,18 @@
             0%, 100% { transform: translateY(0) rotate(0deg); }
             50% { transform: translateY(-10px) rotate(5deg); }
         }
+        @keyframes pulseBtn {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(249, 115, 22, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 35px rgba(249, 115, 22, 0.7); }
+        }
         .anim-title {
             animation: pulseGlow 2s ease-in-out infinite;
         }
         .anim-icon {
             animation: floatIcon 1.5s ease-in-out infinite;
+        }
+        .anim-start-btn {
+            animation: pulseBtn 2s ease-in-out infinite;
         }
         body {
             background-color: #121212;
@@ -64,7 +71,7 @@
 
     <!-- ゲーム風オープニング画面 -->
     <div id="splash-screen" class="fixed inset-0 z-50 bg-dark-bg flex flex-col items-center justify-center p-6 text-center transition-opacity duration-700">
-        <div class="space-y-6 max-w-sm w-full">
+        <div class="space-y-6 max-w-sm w-full flex flex-col items-center">
             <div class="inline-block text-orange-500 text-5xl anim-icon mb-2">
                 <i class="fa-solid fa-utensils"></i>
             </div>
@@ -77,10 +84,12 @@
                 </p>
             </div>
             <p class="text-xs text-dark-muted">今日のゴハン、どこにする？</p>
+            
+            <!-- ラーメン＆STARTのゲーム風アイコンボタン -->
             <div class="pt-6">
-                <button onclick="closeSplashScreen()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-orange-500/20 transition transform active:scale-95 text-sm flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-play text-xs"></i>
-                    <span>ゲームをはじめる</span>
+                <button onclick="closeSplashScreen()" class="anim-start-btn group relative bg-gradient-to-b from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white w-28 h-28 rounded-full shadow-2xl flex flex-col items-center justify-center border-4 border-amber-300/60 transition transform active:scale-95 cursor-pointer">
+                    <i class="fa-solid fa-bowl-food text-3xl mb-1 text-amber-100 drop-shadow"></i>
+                    <span class="text-xs font-black tracking-widest uppercase text-amber-100 drop-shadow-md">START</span>
                 </button>
             </div>
         </div>
