@@ -52,7 +52,6 @@
             background-color: #1e1e1e;
         }
 
-        /* 元の雲がかかったような霧・雲レイヤーの質感に戻す */
         .cloud-fog-layer {
             position: absolute;
             inset: 0;
@@ -128,12 +127,12 @@
                     </div>
                     <span id="exploration-rate" class="text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2.5 py-1 rounded-full font-bold">開拓スポット: 0件</span>
                 </div>
-                <p class="text-xs text-dark-muted">お店を登録すると、周辺の雲が◯の形で晴れていきます！</p>
+                <p class="text-xs text-dark-muted">お店を登録すると、周辺半径1kmの雲が綺麗に晴れていきます！</p>
                 
                 <div class="relative rounded-2xl overflow-hidden border border-dark-border shadow-inner">
                     <div id="map"></div>
                     <div id="cloud-fog" class="cloud-fog-layer"></div>
-                    <!-- 雲穴あけ用SVG (◯で綺麗にくり抜くマスク) -->
+                    <!-- 雲穴あけ用SVG -->
                     <svg id="cloud-svg-overlay">
                         <defs>
                             <mask id="cloud-mask">
@@ -147,7 +146,7 @@
                     <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none w-11/12 max-w-xs">
                         <div class="bg-black/80 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 shadow-2xl text-center">
                             <p class="text-xs font-bold text-white tracking-widest flex items-center justify-center">
-                                <i class="fa-solid fa-cloud-sun text-orange-400 mr-2"></i>雲を晴らそう！
+                                <i class="fa-solid fa-cloud-sun text-orange-400 mr-2"></i>半径1kmの雲を晴らそう！
                             </p>
                         </div>
                     </div>
@@ -321,7 +320,6 @@
         var prefLayer;
         var markersLayer = L.layerGroup();
 
-        // 都道府県ごとの正確な中心座標（フォールバック用）
         const prefCoordinates = {
             "北海道": [43.064, 141.3469], "青森県": [40.8244, 140.74], "岩手県": [39.7036, 141.1527],
             "宮城県": [38.2688, 140.8721], "秋田県": [39.7186, 140.1024], "山形県": [38.2404, 140.3636],
@@ -455,7 +453,7 @@
             });
         }
 
-        // 雲を綺麗な「◯（円）」でくり抜く関数
+        // 雲をショップから正確に「半径1kmの範囲」でくり抜く関数（地図の拡大縮小に完全連動）
         function updateCloudHoles() {
             const holesGroup = document.getElementById('cloud-holes');
             if (!holesGroup || !map) return;
@@ -465,14 +463,19 @@
             allShops.forEach(shop => {
                 if (shop.lat && shop.lng) {
                     validCount++;
-                    const point = map.latLngToContainerPoint([shop.lat, shop.lng]);
-                    const metersPerPixel = 40075016.686 * Math.cos(shop.lat * Math.PI / 180) / Math.pow(2, map.getZoom() + 8);
-                    const radius = Math.max(35, Math.min(250, 1000 / metersPerPixel));
+                    const centerPt = map.latLngToContainerPoint([shop.lat, shop.lng]);
+                    
+                    // 緯度1度 ≒ 111,320m なので、1000m（1km）北の緯度オフセットを計算
+                    const latOffset = 1000 / 111320;
+                    const northPt = map.latLngToContainerPoint([shop.lat + latOffset, shop.lng]);
+                    
+                    // ピクセル単位での正確な半径1kmの長さを算出
+                    const radius = Math.sqrt(Math.pow(centerPt.x - northPt.x, 2) + Math.pow(centerPt.y - northPt.y, 2));
 
                     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                    circle.setAttribute('cx', point.x);
-                    circle.setAttribute('cy', point.y);
-                    circle.setAttribute('r', radius);
+                    circle.setAttribute('cx', centerPt.x);
+                    circle.setAttribute('cy', centerPt.y);
+                    circle.setAttribute('r', Math.max(10, radius)); // 最小値の制限
                     circle.setAttribute('fill', 'black');
                     holesGroup.appendChild(circle);
                 }
@@ -595,7 +598,7 @@
         }
         function closeModal() { document.getElementById('shop-modal').classList.add('hidden'); }
 
-        // 国土地理院APIを使用して住所とピンのズレを完全に解消
+        // 国土地理院APIによる正確な座標取得
         async function getLatLngFromAddress(pref, city, address) {
             const queries = [
                 `${pref}${city}${address}`,
