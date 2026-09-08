@@ -64,17 +64,10 @@
             background-color: #121212;
             color: #f3f4f6;
         }
-        /* 霧アニメーション・スタイル */
         .fog-container {
             position: relative;
             overflow: hidden;
             background: linear-gradient(135deg, #18181b 0%, #27272a 100%);
-        }
-        .fog-overlay {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at 50% 50%, rgba(30, 30, 35, 0.2) 0%, rgba(10, 10, 12, 0.85) 80%);
-            transition: all 0.5s ease;
         }
     </style>
 </head>
@@ -125,7 +118,7 @@
     <!-- メインコンテンツ -->
     <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
 
-        <!-- ★ 地図ゲーム：日本地図フォグ・オブ・ウォー（霧晴らし）セクション -->
+        <!-- 日本地図フォグ・オブ・ウォーセクション -->
         <section class="bg-dark-card border border-dark-border rounded-2xl p-5 shadow-xl relative overflow-hidden fog-container">
             <div class="relative z-10 space-y-4">
                 <div class="flex justify-between items-center">
@@ -137,7 +130,6 @@
                 </div>
                 <p class="text-xs text-dark-muted">お店を登録したり「イッタヨ！」を記録すると、そのエリア（半径500m相当）の霧が晴れていきます！日本全県制覇を目指そう。</p>
                 
-                <!-- 日本地図キャンバス / グリッドエリア -->
                 <div class="bg-dark-input/80 border border-dark-border rounded-xl p-4 text-center relative min-h-[180px] flex flex-col items-center justify-center">
                     <canvas id="japan-map-canvas" width="320" height="160" class="max-w-full h-auto drop-shadow-md"></canvas>
                     <div id="map-status-text" class="text-xs text-orange-300 mt-2 font-medium">現在の晴れエリア: 0 / 47 都道府県</div>
@@ -332,7 +324,6 @@
         let currentUserName = '';
         let allShops = [];
 
-        // 都道府県リスト（47都道府県）
         const prefecturesList = [
             "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
             "茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県",
@@ -418,9 +409,7 @@
             });
         }
 
-        // --- 地図ゲーム（霧晴らしシステム）の描画ロジック ---
         function updateMapGame(shops) {
-            // 登録された都道府県をセットで抽出
             const clearedPrefs = new Set();
             shops.forEach(shop => {
                 if (shop.pref) {
@@ -435,7 +424,6 @@
             document.getElementById('exploration-rate').textContent = `開拓率: ${rate}%`;
             document.getElementById('map-status-text').textContent = `現在の晴れエリア: ${clearedCount} / ${totalPrefs} 都道府県 (半径500m探索完了)`;
 
-            // キャンバスに簡易的な日本地図マトリクス（グリッド or スポット）を描画
             drawJapanCanvas(clearedPrefs);
         }
 
@@ -445,12 +433,9 @@
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 背景（日本全体の霧のベース）
             ctx.fillStyle = '#1e1e24';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 47都道府県を模したグリッドやドットを日本地図の形状っぽく配置して描画
-            // 各都道府県に対応するドットやエリアを描画する
             const cols = 10;
             const rows = 5;
             const cellW = canvas.width / cols;
@@ -468,22 +453,24 @@
                     const w = cellW - 8;
                     const h = cellH - 8;
 
-                    // 晴れている場所はオレンジ/ゴールド、霧の場所はダークグレー
                     if (isCleared) {
-                        ctx.fillStyle = '#f97316'; // 晴れ（オレンジ）
+                        ctx.fillStyle = '#f97316';
                         ctx.shadowColor = 'rgba(249, 115, 22, 0.6)';
                         ctx.shadowBlur = 8;
                     } else {
-                        ctx.fillStyle = '#27272a'; // 霧（ダーク）
+                        ctx.fillStyle = '#27272a';
                         ctx.shadowBlur = 0;
                     }
 
-                    // 角丸の矩形を描画
+                    // 安全に角丸矩形を描画するヘルパー関数
                     ctx.beginPath();
-                    ctx.roundRect(x, y, w, h, 4);
+                    if (typeof ctx.roundRect === 'function') {
+                        ctx.roundRect(x, y, w, h, 4);
+                    } else {
+                        ctx.rect(x, y, w, h);
+                    }
                     ctx.fill();
 
-                    // 県名の頭文字などを小さく表示
                     ctx.fillStyle = isCleared ? '#ffffff' : '#52525b';
                     ctx.font = '9px sans-serif';
                     ctx.textAlign = 'center';
