@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>なにクウ？ ver2 (WEB版)</title>
+    <title>なにクウ？ - 自分だけのグルメ手帳</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -39,6 +39,21 @@
         .slot-animation {
             animation: slotSpin 0.1s linear infinite;
         }
+        /* オープニング画面用のアニメーション */
+        @keyframes pulseGlow {
+            0%, 100% { text-shadow: 0 0 15px rgba(249, 115, 22, 0.6); transform: scale(1); }
+            50% { text-shadow: 0 0 30px rgba(249, 115, 22, 0.9); transform: scale(1.03); }
+        }
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+        .anim-title {
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+        .anim-icon {
+            animation: floatIcon 1.5s ease-in-out infinite;
+        }
         body {
             background-color: #121212;
             color: #f3f4f6;
@@ -46,6 +61,30 @@
     </style>
 </head>
 <body class="min-h-screen pb-32">
+
+    <!-- ゲーム風オープニング画面 -->
+    <div id="splash-screen" class="fixed inset-0 z-50 bg-dark-bg flex flex-col items-center justify-center p-6 text-center transition-opacity duration-700">
+        <div class="space-y-6 max-w-sm w-full">
+            <div class="inline-block text-orange-500 text-5xl anim-icon mb-2">
+                <i class="fa-solid fa-utensils"></i>
+            </div>
+            <div class="space-y-2">
+                <h1 class="text-3xl font-black tracking-widest text-white anim-title">
+                    なにクウ？
+                </h1>
+                <p class="text-xs text-orange-400 font-bold tracking-wider uppercase border-t border-b border-orange-500/30 py-1 inline-block px-4">
+                    - 自分だけのグルメ手帳 -
+                </p>
+            </div>
+            <p class="text-xs text-dark-muted">今日のゴハン、どこにする？</p>
+            <div class="pt-6">
+                <button onclick="closeSplashScreen()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-orange-500/20 transition transform active:scale-95 text-sm flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-play text-xs"></i>
+                    <span>ゲームをはじめる</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- ヘッダー -->
     <header class="bg-dark-card border-b border-dark-border sticky top-0 z-40 shadow-md">
@@ -269,6 +308,15 @@
             initUser();
             loadShops();
         });
+
+        // オープニング画面を閉じる処理
+        function closeSplashScreen() {
+            const splash = document.getElementById('splash-screen');
+            splash.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                splash.style.display = 'none';
+            }, 700);
+        }
 
         function initUser() {
             const savedName = localStorage.getItem('nanikuu_web_username');
