@@ -304,7 +304,7 @@
     <!-- スクリプト部 -->
     <script>
         // ==========================================
-        // 1. Firebase 設定
+        // 1. Firebase 設定 & グローバル変数（一番上に移動）
         // ==========================================
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
@@ -319,7 +319,7 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        let currentUserName = '';
+        let currentUserName = ''; // ★ここに移動して初期化エラーを防止
         let allShops = [];
 
         const prefecturesList = [
@@ -563,7 +563,7 @@
         }
 
         // ==========================================
-        // 5. モーダル制御 & 保存処理（エラー詳細表示対応版）
+        // 5. モーダル制御 & 保存処理
         // ==========================================
         function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); }
         function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); }
@@ -627,11 +627,9 @@
                     if (existing && existing.imageUrl) imageUrl = existing.imageUrl;
                 }
 
-                // 画像がある場合は最大250px・画質0.4に圧縮
                 if (imageFile) {
                     const resizedBlob = await resizeImage(imageFile, 250, 250, 0.4);
                     imageUrl = await convertBlobToBase64(resizedBlob);
-                    console.log('圧縮後 Base64文字数:', imageUrl.length);
                 }
 
                 const shopData = {
@@ -726,7 +724,7 @@
         }
 
         // ==========================================
-        // 8. ユーティリティ（強力な画像圧縮・Base64変換）
+        // 8. ユーティリティ（画像圧縮・Base64変換）
         // ==========================================
         function resizeImage(file, maxWidth, maxHeight, quality) {
             return new Promise((resolve, reject) => {
