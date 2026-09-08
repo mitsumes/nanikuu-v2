@@ -304,16 +304,16 @@
     <!-- スクリプト部 -->
     <script>
         // ==========================================
-        // 1. Firebase 設定 & 初期化（安全対策版）
+        // 1. Firebase 設定 & 初期化（正しいURLを設定済み）
         // ==========================================
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            databaseURL: "YOUR_DATABASE_URL",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSy... (お使いの実際のapiKey)",
+            authDomain: "nanikuu-v2.firebaseapp.com",
+            databaseURL: "https://nanikuu-v2-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "nanikuu-v2",
+            storageBucket: "nanikuu-v2.appspot.com",
+            messagingSenderId: "374828190000",
+            appId: "1:374828190000:web:..."
         };
 
         // Firebaseが二重初期化されないように安全にチェック
