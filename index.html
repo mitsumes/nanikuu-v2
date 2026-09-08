@@ -73,7 +73,6 @@
             transition: opacity 1s ease;
         }
 
-        /* SVG雲マスク用レイヤー */
         #cloud-svg-overlay {
             position: absolute;
             inset: 0;
@@ -159,7 +158,6 @@
                         <defs>
                             <mask id="cloud-mask">
                                 <rect width="100%" height="100%" fill="white" />
-                                <!-- JSでここに <circle> を動的に追加して雲をくり抜きます -->
                                 <g id="cloud-holes"></g>
                             </mask>
                         </defs>
@@ -278,12 +276,16 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-dark-muted mb-1">市区町村名 <span class="text-orange-500">*</span></label>
-                        <input type="text" id="shop-city" placeholder="例: 渋谷区 / 名古屋市" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                        <input type="text" id="shop-city" placeholder="例: 渋谷区" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-dark-muted mb-1">区・番地 <span class="text-orange-500">*</span></label>
                         <input type="text" id="shop-address" placeholder="例: 道玄坂1-2-3" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
                     </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-dark-muted mb-1">マンション名・ビル名など</label>
+                    <input type="text" id="shop-building" placeholder="例: 〇〇ビル 2F" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-dark-muted mb-1">おすすめメニュー・コメント</label>
@@ -337,7 +339,7 @@
         var allShops = [];
         var map;
         var prefLayer;
-        var markersLayer = L.layerGroup(); // ピンを格納するレイヤー
+        var markersLayer = L.layerGroup();
 
         document.addEventListener('DOMContentLoaded', () => {
             initUser();
@@ -353,13 +355,11 @@
                 maxZoom: 18
             }).setView([36.2048, 138.2529], 5);
             
-            // 衛星写真タイル
             L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg', {
                 maxZoom: 18,
                 attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>国土地理院</a>"
             }).addTo(map);
 
-            // 都道府県境界線の読み込み（常時表示）
             prefLayer = new L.GeoJSON.AJAX('https://raw.githubusercontent.com/dataofjapan/land/master/japan.geojson', {
                 style: {
                     color: '#ffffff',
@@ -371,7 +371,6 @@
             prefLayer.addTo(map);
             markersLayer.addTo(map);
 
-            // 地図が動いた時やズームした時に雲の穴の位置を再計算する
             map.on('moveend zoomend', updateCloudHoles);
         }
 
@@ -422,12 +421,10 @@
             });
         }
 
-        // マーカー（ピン）を描画
         function renderMarkers() {
             markersLayer.clearLayers();
             allShops.forEach(shop => {
                 if (shop.lat && shop.lng) {
-                    // カスタムオレンジピンのアイコン
                     const pinIcon = L.divIcon({
                         className: 'custom-pin',
                         html: `<div style="background-color: #f97316; width: 28px; height: 28px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 2px solid #fff;"><i class="fa-solid fa-utensils" style="transform: rotate(45deg); color: #fff; font-size: 12px;"></i></div>`,
@@ -436,14 +433,14 @@
                         popupAnchor: [0, -28]
                     });
 
+                    const fullAddr = `${shop.pref || ''}${shop.city || ''}${shop.address || ''} ${shop.building || ''}`;
                     const marker = L.marker([shop.lat, shop.lng], { icon: pinIcon });
-                    marker.bindPopup(`<div style="color: #121212; font-weight: bold;">${escapeHtml(shop.name)}</div><div style="font-size: 11px; color: #555;">${shop.pref}${shop.city}${shop.address || ''}</div>`);
+                    marker.bindPopup(`<div style="color: #121212; font-weight: bold;">${escapeHtml(shop.name)}</div><div style="font-size: 11px; color: #555;">${escapeHtml(fullAddr)}</div>`);
                     markersLayer.addLayer(marker);
                 }
             });
         }
 
-        // 半径1kmの雲の穴をSVGで更新
         function updateCloudHoles() {
             const holesGroup = document.getElementById('cloud-holes');
             if (!holesGroup) return;
@@ -453,11 +450,7 @@
             allShops.forEach(shop => {
                 if (shop.lat && shop.lng) {
                     validCount++;
-                    // 地図上の緯度経度をピクセル座標に変換
                     const point = map.latLngToContainerPoint([shop.lat, shop.lng]);
-                    
-                    // ズームレベルに応じた半径1kmのピクセルサイズ概算計算
-                    // 赤道付近での1度あたりの距離をベースに、zoomごとのスケールを反映
                     const metersPerPixel = 40075016.686 * Math.cos(shop.lat * Math.PI / 180) / Math.pow(2, map.getZoom() + 8);
                     const radiusPixels = Math.max(15, Math.min(300, 1000 / metersPerPixel));
 
@@ -465,7 +458,7 @@
                     circle.setAttribute('cx', point.x);
                     circle.setAttribute('cy', point.y);
                     circle.setAttribute('r', radiusPixels);
-                    circle.setAttribute('fill', 'black'); // maskで黒くした部分は雲が透明（晴れる）になる
+                    circle.setAttribute('fill', 'black');
                     holesGroup.appendChild(circle);
                 }
             });
@@ -483,6 +476,7 @@
                     (shop.pref && shop.pref.toLowerCase().includes(keyword)) ||
                     (shop.city && shop.city.toLowerCase().includes(keyword)) ||
                     (shop.address && shop.address.toLowerCase().includes(keyword)) ||
+                    (shop.building && shop.building.toLowerCase().includes(keyword)) ||
                     (shop.comment && shop.comment.toLowerCase().includes(keyword));
                 const matchGenre = !genre || shop.genre === genre;
                 return matchKeyword && matchGenre;
@@ -515,7 +509,7 @@
                     ? `<div class="h-40 w-full overflow-hidden bg-dark-input"><img src="${shop.imageUrl}" class="w-full h-full object-cover"></div>`
                     : `<div class="h-20 w-full bg-dark-input flex items-center justify-center text-dark-muted"><i class="fa-solid fa-utensils text-xl opacity-40"></i></div>`;
 
-                const fullAddress = `${shop.pref || ''} ${shop.city || ''} ${shop.address || ''}`;
+                const fullAddress = `${shop.pref || ''} ${shop.city || ''} ${shop.address || ''}${shop.building ? ' ' + shop.building : ''}`;
 
                 card.innerHTML = `
                     <div>
@@ -557,6 +551,7 @@
             document.getElementById('shop-pref').value = '東京都';
             document.getElementById('shop-city').value = '';
             document.getElementById('shop-address').value = '';
+            document.getElementById('shop-building').value = '';
             document.getElementById('shop-comment').value = '';
             document.getElementById('shop-url').value = '';
             document.getElementById('shop-image').value = '';
@@ -573,13 +568,14 @@
             document.getElementById('shop-pref').value = shop.pref || '東京都';
             document.getElementById('shop-city').value = shop.city || '';
             document.getElementById('shop-address').value = shop.address || '';
+            document.getElementById('shop-building').value = shop.building || '';
             document.getElementById('shop-comment').value = shop.comment || '';
             document.getElementById('shop-url').value = shop.url || '';
             document.getElementById('shop-modal').classList.remove('hidden');
         }
         function closeModal() { document.getElementById('shop-modal').classList.add('hidden'); }
 
-        // Nominatim APIを使った住所から緯度経度への変換（ジオコーディング）
+        // 住所から緯度経度を取得（建物名を除外して検索することでエラーを防ぐ）
         async function getLatLngFromAddress(pref, city, address) {
             const query = encodeURIComponent(pref + city + address);
             try {
@@ -591,7 +587,6 @@
             } catch (e) {
                 console.error('Geocoding error:', e);
             }
-            // 万が一失敗した場合は、都道府県のおおよその中心座標を返す
             return null;
         }
 
@@ -602,6 +597,7 @@
             const pref = document.getElementById('shop-pref').value;
             const city = document.getElementById('shop-city').value.trim();
             const address = document.getElementById('shop-address').value.trim();
+            const building = document.getElementById('shop-building').value.trim();
             const comment = document.getElementById('shop-comment').value.trim();
             const url = document.getElementById('shop-url').value.trim();
             const imageFile = document.getElementById('shop-image').files[0];
@@ -616,10 +612,9 @@
             document.getElementById('image-upload-progress').classList.remove('hidden');
 
             try {
-                // 住所から緯度経度を取得
+                // 位置情報検索には「都道府県＋市区町村＋番地」を使用（建物名を除外してヒット率を上げる）
                 let latLng = await getLatLngFromAddress(pref, city, address);
                 if (!latLng) {
-                    // 番地まででヒットしない場合、市区町村で再トライ
                     latLng = await getLatLngFromAddress(pref, city, '');
                 }
                 if (!latLng) {
@@ -637,7 +632,7 @@
                 }
 
                 const shopData = { 
-                    name, genre, pref, city, address, comment, url, imageUrl, 
+                    name, genre, pref, city, address, building, comment, url, imageUrl, 
                     lat: latLng.lat, 
                     lng: latLng.lng, 
                     author: currentUserName 
