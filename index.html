@@ -335,17 +335,17 @@
             prefLayer = new L.GeoJSON.AJAX('https://raw.githubusercontent.com/dataofjapan/land/master/japan.geojson', {
                 style: {
                     color: '#ffffff',
-                    weight: 1,
-                    opacity: 0.8,
+                    weight: 1.5,
+                    opacity: 0.9,
                     fillOpacity: 0
                 }
             });
             prefLayer.addTo(map);
 
-            // ズーム変更時のイベント（ズームが8以上になったら都道府県線を消して市区町村線を表示）
+            // ズーム変更時のイベント（ズームが7以上になったら都道府県線を消して市区町村線を表示）
             map.on('zoomend', () => {
                 const currentZoom = map.getZoom();
-                if (currentZoom >= 8) {
+                if (currentZoom >= 7) {
                     if (map.hasLayer(prefLayer)) {
                         map.removeLayer(prefLayer);
                     }
@@ -365,25 +365,23 @@
             });
         }
 
-        // 市区町村境界線データを非同期でロード（日本全国のオープンデータGeoJSON）
+        // 市区町村境界線データの読み込み（安定したオープンデータ）
         function loadCityBoundaries() {
             if (cityDataLoaded) return;
             cityDataLoaded = true;
 
-            // 国土数値情報などの市区町村ポリゴンデータ（軽量化されたGeoJSON）
-            const CITY_GEOJSON_URL = 'https://raw.githubusercontent.com/gsi-cyberjapan/optimalregionalmesh/master/data/city.geojson'; // 代替として安定した市区町村データURLを使用
+            const CITY_GEOJSON_URL = 'https://raw.githubusercontent.com/greencreek/japan-city-geojson/master/japan.json';
             
-            // ※もし上記でCORSエラー等が出る場合は、日本全体の代表的な市区町村GeoJSONのURLに差し替えてください
-            cityLayer = new L.GeoJSON.AJAX('https://raw.githubusercontent.com/openlayers/openlayers/main/examples/data/geojson/japan-municipalities.geojson', {
+            cityLayer = new L.GeoJSON.AJAX(CITY_GEOJSON_URL, {
                 style: {
                     color: '#ffffff',
-                    weight: 0.6,
-                    opacity: 0.6,
+                    weight: 0.8,
+                    opacity: 0.8,
                     fillOpacity: 0
                 },
                 onEachFeature: (feature, layer) => {
-                    if (feature.properties && feature.properties.N03_004) {
-                        layer.bindTooltip(feature.properties.N03_004, {permanent: false, direction: 'center'});
+                    if (feature.properties && (feature.properties.city || feature.properties.name)) {
+                        layer.bindTooltip(feature.properties.city || feature.properties.name, {permanent: false, direction: 'center'});
                     }
                 }
             });
