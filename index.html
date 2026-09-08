@@ -45,7 +45,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen pb-20">
+<body class="min-h-screen pb-32">
 
     <!-- ヘッダー -->
     <header class="bg-dark-card border-b border-dark-border sticky top-0 z-40 shadow-md">
@@ -67,55 +67,6 @@
 
     <!-- メインコンテンツ -->
     <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
-
-        <!-- アクションボタン＆検索バーエリア -->
-        <div class="bg-dark-card p-4 rounded-xl border border-dark-border shadow-sm space-y-4">
-            <div class="flex flex-col sm:flex-row gap-3">
-                <button onclick="openAddModal()" class="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold py-2.5 px-4 rounded-lg shadow transition flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-plus-circle"></i>
-                    <span>お店を追加する</span>
-                </button>
-                <button onclick="openRouletteModal()" class="flex-1 bg-dark-input hover:bg-dark-border border border-orange-500/50 text-orange-400 font-bold py-2.5 px-4 rounded-lg transition flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-dice text-lg animate-bounce"></i>
-                    <span>今日のランチガチャ（ルーレット）</span>
-                </button>
-            </div>
-
-            <!-- 検索・フィルター -->
-            <div class="pt-2 border-t border-dark-border grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                    <label class="block text-xs text-dark-muted mb-1">フリーワード検索</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-dark-muted">
-                            <i class="fa-solid fa-search"></i>
-                        </span>
-                        <input type="text" id="search-keyword" placeholder="店名・特徴など" oninput="filterShops()" class="w-full bg-dark-input border border-dark-border rounded-lg pl-9 pr-3 py-1.5 text-sm focus:outline-none focus:border-orange-500">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs text-dark-muted mb-1">ジャンル</label>
-                    <select id="filter-genre" onchange="filterShops()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-orange-500">
-                        <option value="">すべてのジャンル</option>
-                        <option value="和食">和食</option>
-                        <option value="洋食">洋食</option>
-                        <option value="中華">中華</option>
-                        <option value="ラーメン">ラーメン</option>
-                        <option value="焼肉・肉料理">焼肉・肉料理</option>
-                        <option value="居酒屋・バー">居酒屋・バー</option>
-                        <option value="カフェ・スイーツ">カフェ・スイーツ</option>
-                        <option value="エスニック・カレー">エスニック・カレー</option>
-                        <option value="その他">その他</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs text-dark-muted mb-1">都道府県</label>
-                    <select id="filter-pref" onchange="filterShops()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-orange-500">
-                        <option value="">すべての地域</option>
-                        <option value="北海道">北海道</option><option value="青森県">青森県</option><option value="岩手県">岩手県</option><option value="宮城県">宮城県</option><option value="秋田県">秋田県</option><option value="山形県">山形県</option><option value="福島県">福島県</option><option value="茨城県">茨城県</option><option value="栃木県">栃木県</option><option value="群馬県">群馬県</option><option value="埼玉県">埼玉県</option><option value="千葉県">千葉県</option><option value="東京都">東京都</option><option value="神奈川県">神奈川県</option><option value="新潟県">新潟県</option><option value="富山県">富山県</option><option value="石川県">石川県</option><option value="福井県">福井県</option><option value="山梨県">山梨県</option><option value="nagano">長野県</option><option value="岐阜県">岐阜県</option><option value="静岡県">静岡県</option><option value="愛知県">愛知県</option><option value="三重県">三重県</option><option value="滋賀県">滋賀県</option><option value="京都府">京都府</option><option value="大阪府">大阪府</option><option value="兵庫県">兵庫県</option><option value="奈良県">奈良県</option><option value="和歌山県">和歌山県</option><option value="鳥取県">鳥取県</option><option value="島根県">島根県</option><option value="岡山県">岡山県</option><option value="広島県">広島県</option><option value="山口県">山口県</option><option value="徳島県">徳島県</option><option value="香川県">香川県</option><option value="愛媛県">愛媛県</option><option value="高知県">高知県</option><option value="福岡県">福岡県</option><option value="佐賀県">佐賀県</option><option value="長崎県">長崎県</option><option value="熊本県">熊本県</option><option value="大分県">大分県</option><option value="宮崎県">宮崎県</option><option value="鹿児島県">鹿児島県</option><option value="沖縄県">沖縄県</option>
-                    </select>
-                </div>
-            </div>
-        </div>
 
         <!-- 飲食店リスト表示エリア -->
         <div class="space-y-4">
@@ -142,6 +93,75 @@
         </div>
 
     </main>
+
+    <!-- 画面下の固定コントロールバー（右手親指操作エリア） -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-dark-card/95 backdrop-blur-md border-t border-dark-border px-4 py-3 shadow-2xl">
+        <div class="max-w-4xl mx-auto flex items-center justify-around gap-2">
+            <!-- 検索ボタン（モーダルを開く） -->
+            <button onclick="openSearchModal()" class="flex-1 bg-dark-input hover:bg-dark-border border border-dark-border text-dark-text font-medium py-3 px-2 rounded-xl text-xs sm:text-sm transition flex flex-col sm:flex-row items-center justify-center gap-1">
+                <i class="fa-solid fa-search text-orange-400 text-base"></i>
+                <span>検索・絞り込み</span>
+            </button>
+
+            <!-- ルーレットボタン -->
+            <button onclick="openRouletteModal()" class="flex-1 bg-dark-input hover:bg-dark-border border border-orange-500/40 text-orange-400 font-medium py-3 px-2 rounded-xl text-xs sm:text-sm transition flex flex-col sm:flex-row items-center justify-center gap-1">
+                <i class="fa-solid fa-dice text-base animate-bounce"></i>
+                <span>ランチガチャ</span>
+            </button>
+
+            <!-- お店追加ボタン（メインの強調アクション） -->
+            <button onclick="openAddModal()" class="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold py-3 px-2 rounded-xl text-xs sm:text-sm transition shadow-lg flex flex-col sm:flex-row items-center justify-center gap-1">
+                <i class="fa-solid fa-plus-circle text-base"></i>
+                <span>お店を追加</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 検索・フィルターモーダル -->
+    <div id="search-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+        <div class="bg-dark-card w-full max-w-lg rounded-t-2xl sm:rounded-2xl border border-dark-border shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-dark-border flex justify-between items-center bg-dark-input">
+                <h3 class="font-bold text-base"><i class="fa-solid fa-search text-orange-400 mr-2"></i>お店を検索・絞り込み</h3>
+                <button onclick="closeSearchModal()" class="text-dark-muted hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-6 space-y-4 overflow-y-auto">
+                <div>
+                    <label class="block text-xs font-semibold text-dark-muted mb-1">フリーワード検索</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-dark-muted">
+                            <i class="fa-solid fa-search"></i>
+                        </span>
+                        <input type="text" id="search-keyword" placeholder="店名・特徴など" oninput="filterShops()" class="w-full bg-dark-input border border-dark-border rounded-lg pl-9 pr-3.5 py-2 text-sm focus:outline-none focus:border-orange-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-dark-muted mb-1">ジャンル</label>
+                    <select id="filter-genre" onchange="filterShops()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                        <option value="">すべてのジャンル</option>
+                        <option value="和食">和食</option>
+                        <option value="洋食">洋食</option>
+                        <option value="中華">中華</option>
+                        <option value="ラーメン">ラーメン</option>
+                        <option value="焼肉・肉料理">焼肉・肉料理</option>
+                        <option value="居酒屋・バー">居酒屋・バー</option>
+                        <option value="カフェ・スイーツ">カフェ・スイーツ</option>
+                        <option value="エスニック・カレー">エスニック・カレー</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-dark-muted mb-1">都道府県</label>
+                    <select id="filter-pref" onchange="filterShops()" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                        <option value="">すべての地域</option>
+                        <option value="北海道">北海道</option><option value="青森県">青森県</option><option value="岩手県">岩手県</option><option value="宮城県">宮城県</option><option value="秋田県">秋田県</option><option value="山形県">山形県</option><option value="福島県">福島県</option><option value="茨城県">茨城県</option><option value="栃木県">栃木県</option><option value="群馬県">群馬県</option><option value="埼玉県">埼玉県</option><option value="千葉県">千葉県</option><option value="東京都">東京都</option><option value="神奈川県">神奈川県</option><option value="新潟県">新潟県</option><option value="富山県">富山県</option><option value="石川県">石川県</option><option value="福井県">福井県</option><option value="山梨県">山梨県</option><option value="長野県">長野県</option><option value="岐阜県">岐阜県</option><option value="静岡県">静岡県</option><option value="愛知県">愛知県</option><option value="三重県">三重県</option><option value="滋賀県">滋賀県</option><option value="京都府">京都府</option><option value="大阪府">大阪府</option><option value="兵庫県">兵庫県</option><option value="奈良県">奈良県</option><option value="和歌山県">和歌山県</option><option value="鳥取県">鳥取県</option><option value="島根県">島根県</option><option value="岡山県">岡山県</option><option value="広島県">広島県</option><option value="山口県">山口県</option><option value="徳島県">徳島県</option><option value="香川県">香川県</option><option value="愛媛県">愛媛県</option><option value="高知県">高知県</option><option value="福岡県">福岡県</option><option value="佐賀県">佐賀県</option><option value="長崎県">長崎県</option><option value="熊本県">熊本県</option><option value="大分県">大分県</option><option value="宮崎県">宮崎県</option><option value="鹿児島県">鹿児島県</option><option value="沖縄県">沖縄県</option>
+                    </select>
+                </div>
+            </div>
+            <div class="p-4 border-t border-dark-border bg-dark-input flex justify-end">
+                <button onclick="closeSearchModal()" class="w-full sm:w-auto px-6 py-2.5 rounded-lg text-sm bg-orange-500 hover:bg-orange-600 text-white font-bold transition">完了</button>
+            </div>
+        </div>
+    </div>
 
     <!-- お店追加・編集モーダル -->
     <div id="shop-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -298,7 +318,6 @@
                         allShops.push({ id: key, ...data[key] });
                     });
                 }
-                // 登録日の新しい順に並び替え
                 allShops.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
                 
                 document.getElementById('loading-spinner').classList.add('hidden');
@@ -344,10 +363,8 @@
             noDataEl.classList.add('hidden');
 
             shops.forEach(shop => {
-                // イッタヨのカウント・状態判定
                 const itayoObj = shop.itayo || {};
                 const itayoCount = Object.keys(itayoObj).length;
-                // ブラウザ識別用として簡易的にユーザー名をキーにするか、ユーザー名が含まれているかで判定
                 const hasItayo = Object.values(itayoObj).some(name => name === currentUserName);
 
                 const card = document.createElement('div');
@@ -392,7 +409,18 @@
         }
 
         // ==========================================
-        // 4. お店の追加・編集処理
+        // 4. 検索モーダル制御
+        // ==========================================
+        function openSearchModal() {
+            document.getElementById('search-modal').classList.remove('hidden');
+        }
+
+        function closeSearchModal() {
+            document.getElementById('search-modal').classList.add('hidden');
+        }
+
+        // ==========================================
+        // 5. お店の追加・編集処理
         // ==========================================
         function openAddModal() {
             document.getElementById('modal-title').textContent = 'お店を追加する';
@@ -454,7 +482,6 @@
                 if (existing && existing.imageUrl) imageUrl = existing.imageUrl;
             }
 
-            // 画像が選択されている場合はリサイズしてFirebase Storageへアップロード
             if (imageFile) {
                 try {
                     document.getElementById('image-upload-progress').classList.remove('hidden');
@@ -503,7 +530,7 @@
         }
 
         // ==========================================
-        // 5. 「イッタヨ！」機能
+        // 6. 「イッタヨ！」機能
         // ==========================================
         function toggleItayo(shopId) {
             const shopRef = database.ref(`shops/${shopId}/itayo`);
@@ -511,7 +538,6 @@
                 const itayoData = snapshot.val() || {};
                 let userKeyToToggle = null;
 
-                // 既に自分が押しているか確認
                 Object.keys(itayoData).forEach(key => {
                     if (itayoData[key] === currentUserName) {
                         userKeyToToggle = key;
@@ -519,17 +545,15 @@
                 });
 
                 if (userKeyToToggle) {
-                    // 登録済みの場合は解除
                     shopRef.child(userKeyToToggle).remove();
                 } else {
-                    // 未登録の場合は追加
                     shopRef.push(currentUserName);
                 }
             });
         }
 
         // ==========================================
-        // 6. ルーレット（ガチャ）機能
+        // 7. ルーレット（ガチャ）機能
         // ==========================================
         function openRouletteModal() {
             if (allShops.length === 0) {
@@ -572,7 +596,7 @@
         }
 
         // ==========================================
-        // 7. 画像リサイズユーティリティ
+        // 8. 画像リサイズユーティリティ
         // ==========================================
         function resizeImage(file, maxWidth, maxHeight, quality) {
             return new Promise((resolve, reject) => {
