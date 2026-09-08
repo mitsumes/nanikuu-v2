@@ -33,35 +33,42 @@
             0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(249, 115, 22, 0.4); }
             50% { transform: scale(1.05); box-shadow: 0 0 35px rgba(249, 115, 22, 0.7); }
         }
-        /* リアルに流れる霧・雲のアニメーション */
-        @keyframes driftFog {
-            0% { transform: translate(0, 0) scale(1); opacity: 0.8; }
-            33% { transform: translate(-20px, 10px) scale(1.05); opacity: 0.95; }
-            66% { transform: translate(15px, -10px) scale(0.98); opacity: 0.85; }
-            100% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+        @keyframes driftCloud {
+            0% { transform: translate(0, 0); }
+            50% { transform: translate(-15px, 8px); }
+            100% { transform: translate(0, 0); }
         }
         .anim-title { animation: pulseGlow 2s ease-in-out infinite; }
         .anim-icon { animation: floatIcon 1.5s ease-in-out infinite; }
         .anim-start-btn { animation: pulseBtn 2s ease-in-out infinite; }
         
+        /* Googleマップ衛星風の背景テクスチャ */
+        .satellite-map-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #090d16 100%);
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.8);
+        }
+
+        /* リアルな雲・霧レイヤー（濃すぎず、マップが見える調整） */
         .real-fog-layer {
-            background: radial-gradient(circle at 50% 40%, rgba(200, 215, 235, 0.75) 0%, rgba(120, 135, 160, 0.65) 50%, rgba(50, 60, 80, 0.5) 100%);
-            animation: driftFog 10s ease-in-out infinite;
-            backdrop-filter: blur(1.5px);
+            background: radial-gradient(circle at 50% 40%, rgba(148, 163, 184, 0.25) 0%, rgba(71, 85, 105, 0.35) 60%, rgba(15, 23, 42, 0.5) 100%);
+            animation: driftCloud 12s ease-in-out infinite;
             pointer-events: none;
             transition: opacity 0.8s ease;
         }
         body { background-color: #121212; color: #f3f4f6; }
         
-        /* 都道府県エリアホバー時のエフェクト */
         .pref-area {
-            transition: all 0.2s ease;
+            transition: all 0.25s ease;
             cursor: pointer;
+            fill: #334155;
+            stroke: #64748b;
+            stroke-width: 1px;
         }
         .pref-area:hover {
-            fill: rgba(249, 115, 22, 0.55) !important;
-            stroke: #ffedd5 !important;
+            fill: rgba(249, 115, 22, 0.7) !important;
+            stroke: #fed7aa !important;
             stroke-width: 2px;
+            filter: drop-shadow(0 0 8px rgba(249, 115, 22, 0.8));
         }
     </style>
 </head>
@@ -77,7 +84,7 @@
                 <h1 class="text-3xl font-black tracking-widest text-white anim-title">なにクウ？</h1>
                 <p class="text-xs text-orange-400 font-bold tracking-wider uppercase border-t border-b border-orange-500/30 py-1 inline-block px-4">- 日本全国 市区町村開拓手帳 -</p>
             </div>
-            <p class="text-xs text-dark-muted">リアルな日本列島に立ちこめる霧を晴らそう！</p>
+            <p class="text-xs text-dark-muted">衛星マップに立ちこめる霧を晴らそう！</p>
             <div class="pt-6">
                 <button onclick="closeSplashScreen()" class="anim-start-btn group bg-gradient-to-b from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white w-28 h-28 rounded-full shadow-2xl flex flex-col items-center justify-center border-4 border-amber-300/60 transition transform active:scale-95 cursor-pointer">
                     <i class="fa-solid fa-bowl-food text-3xl mb-1 text-amber-100"></i>
@@ -92,7 +99,7 @@
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-utensils text-orange-500 text-xl"></i>
-                <h1 class="text-lg font-bold tracking-wider">なにクウ？ <span class="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/30">Japan Map</span></h1>
+                <h1 class="text-lg font-bold tracking-wider">なにクウ？ <span class="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/30">Satellite Map</span></h1>
             </div>
             <div class="flex items-center space-x-2 bg-dark-input px-3 py-1.5 rounded-full border border-dark-border text-sm">
                 <i class="fa-solid fa-user text-orange-400"></i>
@@ -105,39 +112,32 @@
     <!-- メインコンテンツ -->
     <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
 
-        <!-- リアル日本列島マップセクション -->
+        <!-- 衛星マップ風日本列島セクション -->
         <section class="bg-dark-card border border-dark-border rounded-2xl p-4 sm:p-6 shadow-xl relative overflow-hidden">
             <div class="space-y-4">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center space-x-2">
-                        <i class="fa-solid fa-map-location-dot text-orange-400 text-lg"></i>
-                        <h2 class="font-bold text-base text-white">立体日本列島 開拓マップ</h2>
+                        <i class="fa-solid fa-earth-asia text-orange-400 text-lg"></i>
+                        <h2 class="font-bold text-base text-white">衛星日本列島 開拓マップ</h2>
                     </div>
                     <span id="exploration-rate" class="text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2.5 py-1 rounded-full font-bold">発見市区町村: 0件</span>
                 </div>
                 <p class="text-xs text-dark-muted">地図上の都道府県をタップすると、その県にズームインして市区町村ごとの霧の晴れ具合を確認できます。</p>
                 
-                <!-- 美しい日本列島画像＋リアル霧アニメーションエリア -->
-                <div class="bg-gradient-to-b from-slate-950 via-zinc-900 to-dark-input border border-dark-border rounded-2xl p-3 relative flex flex-col items-center justify-center min-h-[440px] overflow-hidden shadow-inner">
+                <!-- Googleマップ衛星風ビュー ＋ 霧アニメーション -->
+                <div class="satellite-map-bg border border-dark-border rounded-2xl p-4 relative flex flex-col items-center justify-center min-h-[460px] overflow-hidden">
                     
-                    <!-- 背景の美しい日本列島イラスト（高精細かつきれいなプロポーション） -->
-                    <div class="relative w-full max-w-[360px] h-[420px] flex items-center justify-center">
-                        <svg viewBox="0 0 600 800" class="w-full h-full drop-shadow-[0_15px_25px_rgba(0,0,0,0.9)]">
-                            <defs>
-                                <!-- 立体的な日本列島のテクスチャグラデーション -->
-                                <linearGradient id="islandBase" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stop-color="#334155" />
-                                    <stop offset="50%" stop-color="#1e293b" />
-                                    <stop offset="100%" stop-color="#0f172a" />
-                                </linearGradient>
-                            </defs>
-                            
-                            <!-- 日本列島シルエット（美しく滑らかなパスライン） -->
-                            <g id="japan-map-group" fill="url(#islandBase)" stroke="#475569" stroke-width="1.5">
+                    <!-- グリッド線（Googleマップ風の演出） -->
+                    <div class="absolute inset-0 bg-[linear-gradient(to_right,#33415515_1px,transparent_1px),linear-gradient(to_bottom,#33415515_1px,transparent_1px)] bg-[size:2rem_2rem] pointer-events-none"></div>
+
+                    <!-- 日本列島SVG地図（精細な輪郭） -->
+                    <div class="relative w-full max-w-[380px] h-[420px] flex items-center justify-center z-10">
+                        <svg viewBox="0 0 600 800" class="w-full h-full drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]">
+                            <g id="japan-map-group">
                                 <!-- 北海道 -->
                                 <path id="svg-北海道" class="pref-area" d="M380,60 C420,40 480,50 510,90 C540,130 510,180 460,180 C410,180 370,140 370,100 C370,75 375,65 380,60 Z" onclick="openPrefList('北海道')" />
                                 
-                                <!-- 東北地方 -->
+                                <!-- 東北 -->
                                 <path id="svg-青森県" class="pref-area" d="M390,190 C430,190 440,220 410,245 C380,245 370,220 390,190 Z" onclick="openPrefList('青森県')" />
                                 <path id="svg-岩手県" class="pref-area" d="M420,250 C460,255 450,300 410,310 C390,300 400,260 420,250 Z" onclick="openPrefList('岩手県')" />
                                 <path id="svg-宮城県" class="pref-area" d="M405,315 C440,315 425,355 390,350 C380,335 390,320 405,315 Z" onclick="openPrefList('宮城県')" />
@@ -145,7 +145,7 @@
                                 <path id="svg-山形県" class="pref-area" d="M360,310 C390,310 385,350 355,350 C345,335 350,320 360,310 Z" onclick="openPrefList('山形県')" />
                                 <path id="svg-福島県" class="pref-area" d="M355,355 C410,355 400,395 350,395 C340,380 345,365 355,355 Z" onclick="openPrefList('福島県')" />
                                 
-                                <!-- 関東地方 -->
+                                <!-- 関東 -->
                                 <path id="svg-茨城県" class="pref-area" d="M390,400 C420,400 420,435 390,435 C380,425 385,410 390,400 Z" onclick="openPrefList('茨城県')" />
                                 <path id="svg-栃木県" class="pref-area" d="M360,400 C385,400 380,435 355,435 C350,420 355,410 360,400 Z" onclick="openPrefList('栃木県')" />
                                 <path id="svg-群馬県" class="pref-area" d="M330,405 C355,405 350,435 325,435 C320,420 325,410 330,405 Z" onclick="openPrefList('群馬県')" />
@@ -154,7 +154,7 @@
                                 <path id="svg-東京都" class="pref-area" d="M355,465 C390,465 385,485 350,485 C345,475 350,470 355,465 Z" onclick="openPrefList('東京都')" />
                                 <path id="svg-神奈川県" class="pref-area" d="M335,490 C370,490 365,510 330,510 C325,500 330,495 335,490 Z" onclick="openPrefList('神奈川県')" />
 
-                                <!-- 中部地方 -->
+                                <!-- 中部 -->
                                 <path id="svg-新潟県" class="pref-area" d="M315,350 C350,355 340,395 305,395 C295,380 305,365 315,350 Z" onclick="openPrefList('新潟県')" />
                                 <path id="svg-富山県" class="pref-area" d="M285,400 C315,400 310,425 280,425 C275,415 280,405 285,400 Z" onclick="openPrefList('富山県')" />
                                 <path id="svg-石川県" class="pref-area" d="M255,395 C285,395 280,435 250,430 C245,415 250,405 255,395 Z" onclick="openPrefList('石川県')" />
@@ -165,7 +165,7 @@
                                 <path id="svg-静岡県" class="pref-area" d="M310,485 C345,485 335,515 300,510 C295,500 305,490 310,485 Z" onclick="openPrefList('静岡県')" />
                                 <path id="svg-愛知県" class="pref-area" d="M280,490 C310,490 305,520 275,515 C270,505 275,495 280,490 Z" onclick="openPrefList('愛知県')" />
 
-                                <!-- 近畿地方 -->
+                                <!-- 近畿 -->
                                 <path id="svg-三重県" class="pref-area" d="M265,515 C295,515 290,555 260,550 C255,535 260,525 265,515 Z" onclick="openPrefList('三重県')" />
                                 <path id="svg-滋賀県" class="pref-area" d="M245,485 C275,485 270,515 240,510 C235,500 240,490 245,485 Z" onclick="openPrefList('滋賀県')" />
                                 <path id="svg-京都府" class="pref-area" d="M225,480 C255,480 250,520 220,515 C215,500 220,490 225,480 Z" onclick="openPrefList('京都府')" />
@@ -174,14 +174,14 @@
                                 <path id="svg-奈良県" class="pref-area" d="M245,530 C270,530 265,560 240,555 C235,545 240,535 245,530 Z" onclick="openPrefList('奈良県')" />
                                 <path id="svg-和歌山県" class="pref-area" d="M230,565 C265,565 255,605 225,600 C220,585 225,575 230,565 Z" onclick="openPrefList('和歌山県')" />
 
-                                <!-- 中国地方 -->
+                                <!-- 中国 -->
                                 <path id="svg-鳥取県" class="pref-area" d="M180,500 C210,500 205,520 175,515 C170,510 175,505 180,500 Z" onclick="openPrefList('鳥取県')" />
                                 <path id="svg-島根県" class="pref-area" d="M145,495 C185,495 180,520 140,515 C135,510 140,500 145,495 Z" onclick="openPrefList('島根県')" />
                                 <path id="svg-岡山県" class="pref-area" d="M185,525 C215,525 210,550 180,545 C175,535 180,530 185,525 Z" onclick="openPrefList('岡山県')" />
                                 <path id="svg-広島県" class="pref-area" d="M150,525 C185,525 180,555 145,550 C140,540 145,530 150,525 Z" onclick="openPrefList('広島県')" />
                                 <path id="svg-山口県" class="pref-area" d="M115,530 C150,530 145,560 110,555 C105,545 110,535 115,530 Z" onclick="openPrefList('山口県')" />
 
-                                <!-- 四国地方 -->
+                                <!-- 四国 -->
                                 <path id="svg-徳島県" class="pref-area" d="M190,570 C220,570 215,595 185,590 C180,580 185,575 190,570 Z" onclick="openPrefList('徳島県')" />
                                 <path id="svg-香川県" class="pref-area" d="M185,555 C215,555 210,570 180,565 C175,560 180,557 185,555 Z" onclick="openPrefList('香川県')" />
                                 <path id="svg-愛媛県" class="pref-area" d="M150,565 C185,565 180,595 145,590 C140,580 145,570 150,565 Z" onclick="openPrefList('愛媛県')" />
@@ -199,18 +199,18 @@
                             </g>
                         </svg>
 
-                        <!-- リアルな霧（雲）が漂うレイヤー（アニメーション） -->
-                        <div id="map-fog-overlay" class="absolute inset-0 real-fog-layer rounded-2xl flex items-center justify-center p-6 text-center">
-                            <div class="bg-black/60 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/20 shadow-2xl">
+                        <!-- 程よい透明度の霧（雲）が漂うレイヤー -->
+                        <div id="map-fog-overlay" class="absolute inset-0 real-fog-layer rounded-2xl flex items-center justify-center p-6 text-center z-20">
+                            <div class="bg-black/60 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 shadow-2xl">
                                 <p class="text-xs font-bold text-white tracking-widest flex items-center justify-center">
-                                    <i class="fa-solid fa-cloud text-orange-400 mr-2 text-base animate-pulse"></i>日本列島に霧が立ち込めています
+                                    <i class="fa-solid fa-cloud text-orange-400 mr-2 animate-pulse"></i>霧に包まれています
                                 </p>
-                                <p class="text-[10px] text-gray-300 mt-1">お店を登録して各地の霧を晴らそう！</p>
+                                <p class="text-[10px] text-gray-300">お店を登録して霧を晴らそう！</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="text-[11px] text-orange-400 font-bold mt-2 flex items-center">
+                    <div class="text-[11px] text-orange-400 font-bold mt-3 flex items-center z-30">
                         <i class="fa-solid fa-hand-pointer mr-1.5 animate-bounce"></i> 日本地図の都道府県を直接タップしてズームイン
                     </div>
                 </div>
@@ -255,7 +255,7 @@
         </div>
     </nav>
 
-    <!-- 都道府県をタップした際の拡大（市区町村マップ）モーダル -->
+    <!-- 都道府県詳細モーダル -->
     <div id="pref-detail-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-dark-card w-full max-w-lg rounded-2xl border border-dark-border shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
             <div class="p-4 border-b border-dark-border flex justify-between items-center bg-dark-input">
@@ -299,7 +299,7 @@
         </div>
     </div>
 
-    <!-- お店追加・編集モーダル -->
+    <!-- お店追加モーダル -->
     <div id="shop-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-dark-card w-full max-w-lg rounded-2xl border border-dark-border shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-4 border-b border-dark-border flex justify-between items-center bg-dark-input">
@@ -457,17 +457,17 @@
 
             const fogOverlay = document.getElementById('map-fog-overlay');
             if (totalClearedCities > 0) {
-                fogOverlay.style.opacity = Math.max(0.12, 0.85 - (totalClearedCities * 0.04));
+                fogOverlay.style.opacity = Math.max(0.15, 0.8 - (totalClearedCities * 0.05));
             } else {
-                fogOverlay.style.opacity = 0.85;
+                fogOverlay.style.opacity = 0.8;
             }
 
             // 開拓済みの都道府県のカラーを変更
             Object.keys(prefClearedMap).forEach(pref => {
                 const pathEl = document.getElementById(`svg-${pref}`);
                 if (pathEl) {
-                    pathEl.setAttribute('fill', '#f97316');
-                    pathEl.setAttribute('stroke', '#fed7aa');
+                    pathEl.style.fill = '#f97316';
+                    pathEl.style.stroke = '#fed7aa';
                 }
             });
         }
