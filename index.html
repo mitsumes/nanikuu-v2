@@ -874,14 +874,15 @@
                             <p class="text-xs text-dark-muted truncate"><i class="fa-solid fa-map-pin text-orange-400 mr-1"></i>${escapeHtml(shortArea)}</p>
                         </div>
                     </div>
-                    <div class="p-3 sm:p-4 pt-0 border-t border-dark-border/40 mt-1 flex justify-end items-center bg-dark-card/50 gap-2">
-                        <button onclick="panToShop('${shop.id}')" class="px-2.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold bg-dark-input hover:bg-dark-border text-white border border-dark-border transition flex items-center space-x-1 shrink-0">
+                    <!-- 修正: ボタンのパディングや文字サイズを調整して見切れないように改善 -->
+                    <div class="p-2 sm:p-3 pt-0 border-t border-dark-border/40 mt-1 flex justify-between items-center bg-dark-card/50 gap-1">
+                        <button onclick="panToShop('${shop.id}')" class="px-1.5 sm:px-2.5 py-1.5 rounded-lg text-[9px] sm:text-xs font-bold bg-dark-input hover:bg-dark-border text-white border border-dark-border transition flex items-center space-x-0.5 sm:space-x-1 shrink-0">
                             <i class="fa-solid fa-map-pin text-orange-400"></i>
-                            <span>地図で見る</span>
+                            <span>地図</span>
                         </button>
-                        <button onclick="toggleItayo('${shop.id}')" class="px-2.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition flex items-center space-x-1 shrink-0 ${hasItayo ? 'bg-orange-500 text-white shadow-sm' : 'bg-dark-input hover:bg-dark-border text-dark-muted border border-dark-border'}">
+                        <button onclick="toggleItayo('${shop.id}')" class="px-1.5 sm:px-2.5 py-1.5 rounded-lg text-[9px] sm:text-xs font-bold transition flex items-center space-x-0.5 sm:space-x-1 shrink-0 ${hasItayo ? 'bg-orange-500 text-white shadow-sm' : 'bg-dark-input hover:bg-dark-border text-dark-muted border border-dark-border'}">
                             <i class="fa-solid fa-check-circle"></i>
-                            <span>イッタヨ！ (${itayoCount})</span>
+                            <span>イッタヨ (${itayoCount})</span>
                         </button>
                     </div>
                 `;
