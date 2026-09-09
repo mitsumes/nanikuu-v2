@@ -187,15 +187,15 @@
             </div>
         </section>
 
-        <!-- タブ切り替え（行ったお店 / 行きたいお店） -->
-        <div class="flex border-b border-dark-border">
+        <!-- タブ切り替え（行ったお店 / 行きたいお店 ※訪問中は行きたいお店を非表示または制限） -->
+        <div class="flex border-b border-dark-border" id="tab-container">
             <button onclick="switchTab('visited')" id="tab-visited" class="flex-1 py-3 text-xs sm:text-sm font-bold border-b-2 border-orange-500 text-orange-400 transition flex items-center justify-center space-x-1.5">
                 <i class="fa-solid fa-utensils"></i>
                 <span>行ったお店 (<span id="count-visited">0</span>)</span>
             </button>
             <button onclick="switchTab('want')" id="tab-want" class="flex-1 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-dark-muted hover:text-white transition flex items-center justify-center space-x-1.5">
                 <i class="fa-solid fa-bookmark text-amber-400"></i>
-                <span>行きたいお店 (<span id="count-want">0</span>)</span>
+                <span id="tab-want-text">行きたいお店 (<span id="count-want">0</span>)</span>
             </button>
         </div>
 
@@ -210,7 +210,7 @@
 
             <div id="no-data" class="hidden text-center py-12 bg-dark-card rounded-xl border border-dark-border">
                 <i class="fa-solid fa-face-grimace text-3xl text-dark-muted mb-2"></i>
-                <p class="text-sm text-dark-muted">条件に一致するお店が見つかりませんでした。</p>
+                <p id="no-data-text" class="text-sm text-dark-muted">条件に一致するお店が見つかりませんでした。</p>
             </div>
         </div>
 
@@ -677,6 +677,8 @@
             const params = new URLSearchParams(window.location.search);
             const userParam = params.get('room');
             const copyBtnText = document.querySelector('#copy-myroom-btn span:last-child');
+            const wantTabEl = document.getElementById('tab-want');
+            const wantTabTextEl = document.getElementById('tab-want-text');
 
             if (userParam && userParam !== currentUserName) {
                 targetRoomUser = userParam;
@@ -685,6 +687,13 @@
                 document.getElementById('header-mode-badge').textContent = `${targetRoomUser}の部屋`;
                 document.getElementById('back-to-myroom-btn').classList.remove('hidden');
                 document.getElementById('add-shop-footer-btn').classList.add('hidden'); // 訪問中は追加ボタン非表示
+                
+                // 【アクセス制御】他人の部屋を訪れた際、「行きたいお店」を非公開または制限する
+                if(wantTabEl) wantTabEl.style.display = 'none';
+                if(currentTab === 'want') {
+                    switchTab('visited'); // 強制的に行ったお店タブへ戻す
+                }
+
                 if(copyBtnText) copyBtnText.textContent = '部屋URL';
                 checkFriendStatus(targetRoomUser);
             } else {
@@ -693,6 +702,10 @@
                 document.getElementById('header-mode-badge').textContent = 'マイページ';
                 document.getElementById('back-to-myroom-btn').classList.add('hidden');
                 document.getElementById('add-shop-footer-btn').classList.remove('hidden');
+                
+                // 自分の部屋の時は行きたいお店タブを表示する
+                if(wantTabEl) wantTabEl.style.display = 'flex';
+
                 if(copyBtnText) copyBtnText.textContent = 'マイ部屋URL';
             }
         }
@@ -867,15 +880,18 @@
         }
 
         function switchTab(tab) {
+            // 他人の部屋にいる場合は want タブへの切り替えをブロックする（セキュリティ・プライバシー保護）
+            if (targetRoomUser && tab === 'want') return;
+
             currentTab = tab;
             const visitedBtn = document.getElementById('tab-visited');
             const wantBtn = document.getElementById('tab-want');
             
             if (tab === 'visited') {
                 visitedBtn.className = "flex-1 py-3 text-xs sm:text-sm font-bold border-b-2 border-orange-500 text-orange-400 transition flex items-center justify-center space-x-1.5";
-                wantBtn.className = "flex-1 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-dark-muted hover:text-white transition flex items-center justify-center space-x-1.5";
+                if(wantBtn) wantBtn.className = "flex-1 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-dark-muted hover:text-white transition flex items-center justify-center space-x-1.5";
             } else {
-                wantBtn.className = "flex-1 py-3 text-xs sm:text-sm font-bold border-b-2 border-amber-400 text-amber-400 transition flex items-center justify-center space-x-1.5";
+                if(wantBtn) wantBtn.className = "flex-1 py-3 text-xs sm:text-sm font-bold border-b-2 border-amber-400 text-amber-400 transition flex items-center justify-center space-x-1.5";
                 visitedBtn.className = "flex-1 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-dark-muted hover:text-white transition flex items-center justify-center space-x-1.5";
             }
             filterShops();
@@ -935,7 +951,12 @@
         function renderMarkers() {
             if (!markersLayer) return;
             markersLayer.clearLayers();
-            const visibleShops = allShops.filter(shop => (shop.listType || 'visited') === currentTab);
+            // 他人の部屋にいる場合は want リストのピンを地図上に表示させない（アクセス制御）
+            const visibleShops = allShops.filter(shop => {
+                const isWant = (shop.listType || 'visited') === 'want';
+                if (targetRoomUser && isWant) return false;
+                return (shop.listType || 'visited') === currentTab;
+            });
 
             visibleShops.forEach(shop => {
                 if (shop.lat && shop.lng) {
@@ -967,7 +988,11 @@
             const cities = getUniqueCities();
             cities.forEach(item => {
                 const cleanName = getCleanCityName(item.pref, item.city);
-                const shopsInCity = allShops.filter(s => s.pref === item.pref && getCleanCityName(s.pref, s.city) === cleanName && s.lat && s.lng);
+                const shopsInCity = allShops.filter(s => {
+                    const isWant = (s.listType || 'visited') === 'want';
+                    if (targetRoomUser && isWant) return false;
+                    return s.pref === item.pref && getCleanCityName(s.pref, s.city) === cleanName && s.lat && s.lng;
+                });
                 if (shopsInCity.length > 0) {
                     let sumLat = 0, sumLng = 0;
                     shopsInCity.forEach(s => { sumLat += s.lat; sumLng += s.lng; });
@@ -980,7 +1005,11 @@
         }
 
         function updateExplorationCount() {
-            const validCount = allShops.filter(s => s.lat && s.lng).length;
+            const validCount = allShops.filter(s => {
+                const isWant = (s.listType || 'visited') === 'want';
+                if (targetRoomUser && isWant) return false;
+                return s.lat && s.lng;
+            }).length;
             const rateEl = document.getElementById('exploration-rate');
             if (rateEl) rateEl.textContent = `登録スポット: ${validCount}件`;
         }
@@ -990,7 +1019,11 @@
             const genre = document.getElementById('filter-genre')?.value || '';
 
             const filtered = allShops.filter(shop => {
-                const matchTab = (shop.listType || 'visited') === currentTab;
+                const listType = shop.listType || 'visited';
+                // 訪問中で want リストの場合は厳格に非表示にする（アクセス制御）
+                if (targetRoomUser && listType === 'want') return false;
+
+                const matchTab = listType === currentTab;
                 const matchKeyword = !keyword || 
                     shop.name?.toLowerCase().includes(keyword) ||
                     shop.pref?.toLowerCase().includes(keyword) ||
@@ -1132,6 +1165,8 @@
         function getUniqueCities() {
             const citiesMap = {};
             allShops.forEach(shop => {
+                const listType = shop.listType || 'visited';
+                if (targetRoomUser && listType === 'want') return; // アクセス制御：他人の want リストの都市は集計しない
                 if (shop.city && shop.pref) {
                     const cleanName = getCleanCityName(shop.pref, shop.city);
                     const key = `${shop.pref}_${cleanName}`;
@@ -1264,8 +1299,15 @@
         function openRouletteModal() { document.getElementById('roulette-modal').classList.remove('hidden'); }
         function closeRouletteModal() { document.getElementById('roulette-modal').classList.add('hidden'); }
         function startRoulette() {
-            if (allShops.length === 0) { alert('お店がありません'); return; }
-            const randomShop = allShops[Math.floor(Math.random() * allShops.length)];
+            // 訪問中の場合は公開されているデータ（visitedなど）からのみ抽選対象にする
+            const availableShops = allShops.filter(s => {
+                const listType = s.listType || 'visited';
+                if (targetRoomUser && listType === 'want') return false;
+                return true;
+            });
+
+            if (availableShops.length === 0) { alert('お店がありません'); return; }
+            const randomShop = availableShops[Math.floor(Math.random() * availableShops.length)];
             document.getElementById('roulette-text').textContent = `🎉 ${randomShop.name} 🎉`;
             document.getElementById('roulette-sub').textContent = `${randomShop.genre} / ${randomShop.pref} ${randomShop.city}`;
             document.getElementById('roulette-text').classList.add('winner-animation');
