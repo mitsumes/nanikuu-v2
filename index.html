@@ -459,12 +459,12 @@
 
     <!-- 「とこイク？」ルーレットモーダル -->
     <div id="roulette-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-dark-card w-full max-w-md rounded-2xl border border-dark-border shadow-2xl p-6 text-center space-y-5">
+        <div class="bg-dark-card w-full max-w-md rounded-2xl border border-dark-border shadow-2xl p-6 text-center space-y-4">
             <h3 class="font-bold text-lg text-orange-400"><i class="fa-solid fa-dice mr-2"></i>とこイク？ルーレット</h3>
             <p class="text-xs text-dark-muted">条件を選んでお出かけ先を決めよう！</p>
 
             <!-- フィルター設定 -->
-            <div class="bg-dark-input p-3 rounded-xl border border-dark-border space-y-3 text-left">
+            <div class="bg-dark-input p-3 rounded-xl border border-dark-border space-y-2.5 text-left">
                 <div>
                     <label class="block text-[11px] font-bold text-dark-muted mb-1">ジャンル絞り込み</label>
                     <select id="roulette-genre" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-orange-500 text-gray-200">
@@ -486,15 +486,19 @@
                         <option value="all">すべての地域</option>
                     </select>
                 </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-dark-muted mb-1">市区町村・フリーワード絞り込み</label>
+                    <input type="text" id="roulette-keyword" placeholder="例: 東海市、駅名、キーワードなど" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-orange-500 text-gray-200">
+                </div>
             </div>
 
             <!-- スロット風回転ディスプレイ -->
-            <div id="roulette-box" class="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 border-2 border-orange-500/50 rounded-xl p-6 min-h-[120px] flex flex-col items-center justify-center space-y-2 relative overflow-hidden shadow-inner">
+            <div id="roulette-box" class="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 border-2 border-orange-500/50 rounded-xl p-5 min-h-[100px] flex flex-col items-center justify-center space-y-1.5 relative overflow-hidden shadow-inner">
                 <span id="roulette-text" class="text-xl font-black text-gray-100 tracking-wide">「まわす」を押してね！</span>
                 <span id="roulette-sub" class="text-xs text-orange-300 font-medium"></span>
             </div>
 
-            <div class="flex space-x-3">
+            <div class="flex space-x-3 pt-1">
                 <button onclick="closeRouletteModal()" class="flex-1 bg-dark-border hover:bg-dark-muted/30 py-2.5 rounded-lg text-sm transition">とじる</button>
                 <button onclick="startRoulette()" id="roulette-btn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-lg text-sm transition shadow-lg">ルーレットをまわす！</button>
             </div>
@@ -733,7 +737,6 @@
             if (!prefSelect) return;
             const currentVal = prefSelect.value;
             
-            // 登録されている店舗の都道府県一覧を抽出
             const prefs = [...new Set(allShops.map(s => s.pref).filter(Boolean))].sort();
             
             let html = '<option value="all">すべての地域</option>';
@@ -1215,6 +1218,7 @@
         function openRouletteModal() {
             if (allShops.length === 0) { alert('お店が登録されていません。'); return; }
             updateRoulettePrefOptions();
+            document.getElementById('roulette-keyword').value = '';
             document.getElementById('roulette-text').textContent = '「ルーレットをまわす！」を押してね！';
             document.getElementById('roulette-text').classList.remove('winner-animation');
             document.getElementById('roulette-sub').textContent = '';
@@ -1227,6 +1231,8 @@
 
             const selectedGenre = document.getElementById('roulette-genre').value;
             const selectedPref = document.getElementById('roulette-pref').value;
+            const keyword = document.getElementById('roulette-keyword').value.trim().toLowerCase();
+            
             const textEl = document.getElementById('roulette-text');
             const subEl = document.getElementById('roulette-sub');
             const btnEl = document.getElementById('roulette-btn');
@@ -1235,12 +1241,21 @@
             const filteredShops = allShops.filter(shop => {
                 const matchGenre = (selectedGenre === 'all' || shop.genre === selectedGenre);
                 const matchPref = (selectedPref === 'all' || shop.pref === selectedPref);
-                return matchGenre && matchPref;
+                
+                // 市町村・フリーワードの判定
+                const matchKeyword = !keyword || 
+                    (shop.name && shop.name.toLowerCase().includes(keyword)) ||
+                    (shop.city && shop.city.toLowerCase().includes(keyword)) ||
+                    (shop.address && shop.address.toLowerCase().includes(keyword)) ||
+                    (shop.building && shop.building.toLowerCase().includes(keyword)) ||
+                    (shop.comment && shop.comment.toLowerCase().includes(keyword));
+
+                return matchGenre && matchPref && matchKeyword;
             });
 
             if (filteredShops.length === 0) {
                 textEl.textContent = "条件に合うお店がないよ…！";
-                subEl.textContent = "別の条件を選んでね";
+                subEl.textContent = "別の条件を指定してね";
                 textEl.classList.remove('winner-animation');
                 return;
             }
@@ -1249,8 +1264,8 @@
             textEl.classList.remove('winner-animation');
 
             let counter = 0;
-            const totalSteps = 28; // 切り替え回数
-            let intervalTime = 40;  // 最初は高速回転
+            const totalSteps = 28; 
+            let intervalTime = 40;  
 
             function spinStep() {
                 const randomShop = filteredShops[Math.floor(Math.random() * filteredShops.length)];
@@ -1259,11 +1274,9 @@
 
                 counter++;
                 if (counter < totalSteps) {
-                    // 徐々に減速するスロット風演出
                     intervalTime += 18;
                     setTimeout(spinStep, intervalTime);
                 } else {
-                    // 当選決定！
                     const finalShop = filteredShops[Math.floor(Math.random() * filteredShops.length)];
                     textEl.textContent = `🎉 ${finalShop.name} 🎉`;
                     subEl.textContent = `【決定】 ${finalShop.genre} / ${finalShop.pref} ${finalShop.city} ${finalShop.address || ''}`;
