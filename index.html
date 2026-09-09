@@ -50,12 +50,17 @@
             70% { transform: scale(1.1) rotate(5deg); opacity: 1; }
             100% { transform: scale(1) rotate(0deg); opacity: 1; }
         }
+        @keyframes bounceWinner {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: scale(1.05) translateY(-4px); }
+        }
 
         .anim-title { animation: pulseGlow 2s ease-in-out infinite; }
         .anim-icon { animation: floatIcon 1.5s ease-in-out infinite; }
         .anim-start-btn { animation: pulseBtn 2s ease-in-out infinite; }
         .dropped-pin { animation: popPin 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         .badge-anim { animation: badgePop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .winner-animation { animation: bounceWinner 0.5s ease infinite alternate; color: #ffdd59 !important; }
 
         .pin-shockwave {
             position: absolute;
@@ -189,7 +194,7 @@
                 <i class="fa-solid fa-medal text-amber-400 text-base"></i>
                 <span>市町村図鑑</span>
             </button>
-            <button onclick="openRouletteModal()" class="w-14 bg-dark-input hover:bg-dark-border border border-orange-500/40 text-orange-400 font-medium py-3 px-2 rounded-xl transition flex items-center justify-center" title="ガチャ">
+            <button onclick="openRouletteModal()" class="w-14 bg-dark-input hover:bg-dark-border border border-orange-500/40 text-orange-400 font-medium py-3 px-2 rounded-xl transition flex items-center justify-center" title="とこイク？">
                 <i class="fa-solid fa-dice text-xl animate-bounce"></i>
             </button>
             <button onclick="openAddModal()" class="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold py-3 px-2 rounded-xl text-xs transition shadow-lg flex flex-col sm:flex-row items-center justify-center gap-1">
@@ -452,17 +457,46 @@
         </div>
     </div>
 
-    <!-- ルーレットモーダル -->
+    <!-- 「とこイク？」ルーレットモーダル -->
     <div id="roulette-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-dark-card w-full max-w-md rounded-2xl border border-dark-border shadow-2xl p-6 text-center space-y-6">
-            <h3 class="font-bold text-lg text-orange-400"><i class="fa-solid fa-dice mr-2"></i>今日のランチガチャ</h3>
-            <div id="roulette-box" class="bg-dark-input border-2 border-orange-500/50 rounded-xl p-8 min-h-[140px] flex flex-col items-center justify-center space-y-2">
-                <span id="roulette-text" class="text-xl font-bold text-gray-200">お店を選んでいます...</span>
-                <span id="roulette-sub" class="text-xs text-dark-muted"></span>
+        <div class="bg-dark-card w-full max-w-md rounded-2xl border border-dark-border shadow-2xl p-6 text-center space-y-5">
+            <h3 class="font-bold text-lg text-orange-400"><i class="fa-solid fa-dice mr-2"></i>とこイク？ルーレット</h3>
+            <p class="text-xs text-dark-muted">条件を選んでお出かけ先を決めよう！</p>
+
+            <!-- フィルター設定 -->
+            <div class="bg-dark-input p-3 rounded-xl border border-dark-border space-y-3 text-left">
+                <div>
+                    <label class="block text-[11px] font-bold text-dark-muted mb-1">ジャンル絞り込み</label>
+                    <select id="roulette-genre" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-orange-500 text-gray-200">
+                        <option value="all">すべてのジャンル</option>
+                        <option value="和食">和食</option>
+                        <option value="洋食">洋食</option>
+                        <option value="中華">中華</option>
+                        <option value="ラーメン">ラーメン</option>
+                        <option value="焼肉・肉料理">焼肉・肉料理</option>
+                        <option value="居酒屋・バー">居酒屋・バー</option>
+                        <option value="カフェ・スイーツ">カフェ・スイーツ</option>
+                        <option value="エスニック・カレー">エスニック・カレー</option>
+                        <option value="その他">その他</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-dark-muted mb-1">地域（都道府県）絞り込み</label>
+                    <select id="roulette-pref" class="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-orange-500 text-gray-200">
+                        <option value="all">すべての地域</option>
+                    </select>
+                </div>
             </div>
+
+            <!-- スロット風回転ディスプレイ -->
+            <div id="roulette-box" class="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 border-2 border-orange-500/50 rounded-xl p-6 min-h-[120px] flex flex-col items-center justify-center space-y-2 relative overflow-hidden shadow-inner">
+                <span id="roulette-text" class="text-xl font-black text-gray-100 tracking-wide">「まわす」を押してね！</span>
+                <span id="roulette-sub" class="text-xs text-orange-300 font-medium"></span>
+            </div>
+
             <div class="flex space-x-3">
                 <button onclick="closeRouletteModal()" class="flex-1 bg-dark-border hover:bg-dark-muted/30 py-2.5 rounded-lg text-sm transition">とじる</button>
-                <button onclick="startRoulette()" id="roulette-btn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-lg text-sm transition">もう一度回す</button>
+                <button onclick="startRoulette()" id="roulette-btn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-lg text-sm transition shadow-lg">ルーレットをまわす！</button>
             </div>
         </div>
     </div>
@@ -485,7 +519,7 @@
         var markersLayer = L.layerGroup();
         var territoryLayer = L.layerGroup();
         var justAddedShopId = null; 
-        var currentSelectedShopId = null; // 詳細モーダル表示用
+        var currentSelectedShopId = null;
 
         function getCleanCityName(pref, rawCity) {
             if (!rawCity) return '';
@@ -680,6 +714,7 @@
                 renderMarkers();
                 renderTerritories();
                 updateExplorationCount();
+                updateRoulettePrefOptions();
 
                 if (justAddedShopId) {
                     const targetShop = allShops.find(s => s.id === justAddedShopId);
@@ -691,6 +726,22 @@
                     justAddedShopId = null;
                 }
             });
+        }
+
+        function updateRoulettePrefOptions() {
+            const prefSelect = document.getElementById('roulette-pref');
+            if (!prefSelect) return;
+            const currentVal = prefSelect.value;
+            
+            // 登録されている店舗の都道府県一覧を抽出
+            const prefs = [...new Set(allShops.map(s => s.pref).filter(Boolean))].sort();
+            
+            let html = '<option value="all">すべての地域</option>';
+            prefs.forEach(p => {
+                html += `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`;
+            });
+            prefSelect.innerHTML = html;
+            prefSelect.value = prefs.includes(currentVal) ? currentVal : 'all';
         }
 
         function renderMarkers() {
@@ -711,7 +762,6 @@
                     const pinIcon = L.divIcon({ className: 'custom-pin-animated', html: pinHtml, iconSize: [36, 36], iconAnchor: [18, 36], popupAnchor: [0, -36] });
                     const marker = L.marker([shop.lat, shop.lng], { icon: pinIcon });
                     
-                    // 【ご要望対応】ピンアイコンをクリック（タップ）されたら、その場所を中心にズームして詳細を開く
                     marker.on('click', () => {
                         if (map) {
                             map.flyTo([shop.lat, shop.lng], 16, { duration: 1.0 });
@@ -800,12 +850,10 @@
                 const card = document.createElement('div');
                 card.className = "bg-dark-card border border-dark-border rounded-xl overflow-hidden shadow-md flex flex-col justify-between";
                 
-                // 【ご要望対応】画像をタップ（クリック）するとお店の詳細が開くようにイベントとカーソルスタイルを追加
                 let imageHtml = shop.imageUrl 
                     ? `<div onclick="openDetailModal('${shop.id}')" class="h-32 sm:h-40 w-full overflow-hidden bg-dark-input cursor-pointer group"><img src="${shop.imageUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" title="タップして詳細を見る"></div>`
                     : `<div onclick="openDetailModal('${shop.id}')" class="h-20 sm:h-24 w-full bg-dark-input flex flex-col items-center justify-center text-dark-muted cursor-pointer hover:bg-dark-border/50 transition"><i class="fa-solid fa-utensils text-xl opacity-40 mb-1"></i><span class="text-[10px] opacity-60">詳細を見る</span></div>`;
 
-                // 【ご要望対応】表示情報を最低限にスッキリ整理（店名とジャンル、エリアのみ）
                 const shortArea = `${shop.pref || ''} ${shop.city || ''}`;
 
                 card.innerHTML = `
@@ -835,7 +883,6 @@
             });
         }
 
-        // 【ご要望対応】お店の詳細情報をポップアップで開く関数
         function openDetailModal(id) {
             const shop = allShops.find(s => s.id === id);
             if (!shop) return;
@@ -850,7 +897,6 @@
             document.getElementById('detail-parking').textContent = shop.parking || '-';
             document.getElementById('detail-reservation').textContent = shop.reservation || '-';
 
-            // 画像の表示切替
             const imgContainer = document.getElementById('detail-image-container');
             const imgEl = document.getElementById('detail-image');
             if (shop.imageUrl) {
@@ -860,7 +906,6 @@
                 imgContainer.classList.add('hidden');
             }
 
-            // 決済方法タグ
             const paymentsEl = document.getElementById('detail-payments');
             paymentsEl.innerHTML = '';
             if (shop.payments && shop.payments.length > 0) {
@@ -871,7 +916,6 @@
                 paymentsEl.innerHTML = '<span class="text-xs text-dark-muted">情報なし</span>';
             }
 
-            // 利用シーンタグ
             const scenesEl = document.getElementById('detail-scenes');
             scenesEl.innerHTML = '';
             if (shop.scenes && shop.scenes.length > 0) {
@@ -882,7 +926,6 @@
                 scenesEl.innerHTML = '<span class="text-xs text-dark-muted">情報なし</span>';
             }
 
-            // コメント・メモ
             const commentEl = document.getElementById('detail-comment');
             if (shop.comment) {
                 commentEl.textContent = shop.comment;
@@ -891,7 +934,6 @@
                 commentEl.parentElement.classList.add('hidden');
             }
 
-            // 参考URL
             const urlWrapper = document.getElementById('detail-url-wrapper');
             const urlEl = document.getElementById('detail-url');
             if (shop.url) {
@@ -910,12 +952,10 @@
             document.getElementById('detail-modal').classList.add('hidden');
         }
 
-        // 詳細画面から地図上の位置へ移動する
         function panToShopFromDetail() {
             const shop = allShops.find(s => s.id === currentSelectedShopId);
             if (shop && shop.lat && shop.lng && map) {
                 closeDetailModal();
-                // 画面を一番上にスクロールして地図を表示
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 setTimeout(() => {
                     map.flyTo([shop.lat, shop.lng], 16, { duration: 1.2 });
@@ -1173,28 +1213,66 @@
         }
 
         function openRouletteModal() {
-            if (allShops.length === 0) { alert('お店がありません。'); return; }
+            if (allShops.length === 0) { alert('お店が登録されていません。'); return; }
+            updateRoulettePrefOptions();
+            document.getElementById('roulette-text').textContent = '「ルーレットをまわす！」を押してね！';
+            document.getElementById('roulette-text').classList.remove('winner-animation');
+            document.getElementById('roulette-sub').textContent = '';
             document.getElementById('roulette-modal').classList.remove('hidden');
-            startRoulette();
         }
         function closeRouletteModal() { document.getElementById('roulette-modal').classList.add('hidden'); }
         
         function startRoulette() {
+            if (allShops.length === 0) { alert('お店が登録されていません。'); return; }
+
+            const selectedGenre = document.getElementById('roulette-genre').value;
+            const selectedPref = document.getElementById('roulette-pref').value;
             const textEl = document.getElementById('roulette-text');
             const subEl = document.getElementById('roulette-sub');
             const btnEl = document.getElementById('roulette-btn');
+
+            // フィルター条件に合致するスポットを抽出
+            const filteredShops = allShops.filter(shop => {
+                const matchGenre = (selectedGenre === 'all' || shop.genre === selectedGenre);
+                const matchPref = (selectedPref === 'all' || shop.pref === selectedPref);
+                return matchGenre && matchPref;
+            });
+
+            if (filteredShops.length === 0) {
+                textEl.textContent = "条件に合うお店がないよ…！";
+                subEl.textContent = "別の条件を選んでね";
+                textEl.classList.remove('winner-animation');
+                return;
+            }
+
             btnEl.disabled = true;
-            let count = 0;
-            const timer = setInterval(() => {
-                const rand = allShops[Math.floor(Math.random() * allShops.length)];
-                textEl.textContent = rand.name;
-                subEl.textContent = `${rand.genre} / ${rand.pref} ${rand.city} ${rand.address || ''}`;
-                count++;
-                if (count >= 15) {
-                    clearInterval(timer);
+            textEl.classList.remove('winner-animation');
+
+            let counter = 0;
+            const totalSteps = 28; // 切り替え回数
+            let intervalTime = 40;  // 最初は高速回転
+
+            function spinStep() {
+                const randomShop = filteredShops[Math.floor(Math.random() * filteredShops.length)];
+                textEl.textContent = randomShop.name;
+                subEl.textContent = `${randomShop.genre} / ${randomShop.pref} ${randomShop.city}`;
+
+                counter++;
+                if (counter < totalSteps) {
+                    // 徐々に減速するスロット風演出
+                    intervalTime += 18;
+                    setTimeout(spinStep, intervalTime);
+                } else {
+                    // 当選決定！
+                    const finalShop = filteredShops[Math.floor(Math.random() * filteredShops.length)];
+                    textEl.textContent = `🎉 ${finalShop.name} 🎉`;
+                    subEl.textContent = `【決定】 ${finalShop.genre} / ${finalShop.pref} ${finalShop.city} ${finalShop.address || ''}`;
+                    textEl.classList.add('winner-animation');
                     btnEl.disabled = false;
                 }
-            }, 80);
+            }
+
+            spinStep();
         }
 
         function resizeImage(file, maxWidth, maxHeight, quality) {
