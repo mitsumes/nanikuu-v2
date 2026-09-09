@@ -40,7 +40,7 @@
         }
         /* ピンがズームイン後に登場する演出 */
         @keyframes popPin {
-            0% { transform: scale(0) rotate(-45Y); opacity: 0; }
+            0% { transform: scale(0) rotate(-45deg); opacity: 0; }
             70% { transform: scale(1.2) rotate(-45deg); opacity: 1; }
             100% { transform: scale(1) rotate(-45deg); opacity: 1; }
         }
@@ -189,7 +189,8 @@
                 <p class="text-xs text-dark-muted mt-2">データを読み込んでいます...</p>
             </div>
 
-            <div id="shop-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            <!-- 修正: 常に横2列・縦無制限 (grid-cols-2) に設定 -->
+            <div id="shop-list" class="grid grid-cols-2 gap-3 sm:gap-4"></div>
 
             <div id="no-data" class="hidden text-center py-12 bg-dark-card rounded-xl border border-dark-border">
                 <i class="fa-solid fa-face-grimace text-3xl text-dark-muted mb-2"></i>
@@ -379,10 +380,10 @@
                     maxZoom: 19
                 }).setView([36.2048, 138.2529], 5);
                 
-                // 【リアルさ重視】国土地理院の最高画質オルソ画像（シームレスに拡大できる高精細レイヤー）に設定
-                L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg', {
+                // 【変更】国土地理院の「標準地図」レイヤーに変更（リアルな色分けや地形・標高が分かりやすい地図）
+                L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
                     maxZoom: 19,
-                    attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>国土地理院（全国最新写真）</a>"
+                    attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>国土地理院（標準地図）</a>"
                 }).addTo(map);
 
                 if (typeof L.GeoJSON.AJAX !== 'undefined') {
@@ -456,16 +457,14 @@
                 renderMarkers();
                 updateCloudHoles();
 
-                // 【演出改善】日本全体から目的地へ徐々にスーッとズームアップし、最後にピンが出現する演出
                 if (justAddedShopId) {
                     const targetShop = allShops.find(s => s.id === justAddedShopId);
                     if (targetShop && targetShop.lat && targetShop.lng && map) {
-                        // 一旦日本全体に近い位置からスタートするか、現在地からフライ
                         map.setView([36.2048, 138.2529], 5, { animate: false });
                         
                         setTimeout(() => {
                             map.flyTo([targetShop.lat, targetShop.lng], 16, {
-                                duration: 2.2, // 2.2秒かけてダイナミックにズームイン
+                                duration: 2.2,
                                 easeLinearity: 0.25
                             });
                         }, 300);
@@ -579,32 +578,32 @@
                 card.className = "bg-dark-card border border-dark-border rounded-xl overflow-hidden shadow-md flex flex-col justify-between";
                 
                 let imageHtml = shop.imageUrl 
-                    ? `<div class="h-40 w-full overflow-hidden bg-dark-input"><img src="${shop.imageUrl}" class="w-full h-full object-cover"></div>`
-                    : `<div class="h-20 w-full bg-dark-input flex items-center justify-center text-dark-muted"><i class="fa-solid fa-utensils text-xl opacity-40"></i></div>`;
+                    ? `<div class="h-32 sm:h-40 w-full overflow-hidden bg-dark-input"><img src="${shop.imageUrl}" class="w-full h-full object-cover"></div>`
+                    : `<div class="h-20 sm:h-24 w-full bg-dark-input flex items-center justify-center text-dark-muted"><i class="fa-solid fa-utensils text-xl opacity-40"></i></div>`;
 
                 const fullAddress = `${shop.pref || ''} ${shop.city || ''} ${shop.address || ''}${shop.building ? ' ' + shop.building : ''}`;
 
                 card.innerHTML = `
                     <div>
                         ${imageHtml}
-                        <div class="p-4 space-y-2">
-                            <div class="flex justify-between items-start">
+                        <div class="p-3 sm:p-4 space-y-2">
+                            <div class="flex justify-between items-start gap-1">
                                 <div class="flex flex-wrap gap-1 items-center">
                                     <span class="text-[10px] bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded border border-orange-500/30">${shop.genre || 'その他'}</span>
-                                    <span class="text-[10px] bg-dark-input text-dark-muted px-2 py-0.5 rounded border border-dark-border"><i class="fa-solid fa-map-pin text-orange-400 mr-1"></i>${escapeHtml(fullAddress)}</span>
+                                    <span class="text-[10px] bg-dark-input text-dark-muted px-2 py-0.5 rounded border border-dark-border truncate max-w-[100px] sm:max-w-xs"><i class="fa-solid fa-map-pin text-orange-400 mr-1"></i>${escapeHtml(fullAddress)}</span>
                                 </div>
-                                <div class="flex space-x-1">
+                                <div class="flex space-x-1 shrink-0">
                                     <button onclick="openEditModal('${shop.id}')" class="text-dark-muted hover:text-white p-1 text-xs"><i class="fa-solid fa-pen"></i></button>
                                     <button onclick="deleteShop('${shop.id}')" class="text-dark-muted hover:text-red-400 p-1 text-xs"><i class="fa-solid fa-trash"></i></button>
                                 </div>
                             </div>
-                            <h3 class="font-bold text-base text-gray-100">${escapeHtml(shop.name)}</h3>
+                            <h3 class="font-bold text-sm sm:text-base text-gray-100 truncate">${escapeHtml(shop.name)}</h3>
                             ${shop.comment ? `<p class="text-xs text-dark-muted line-clamp-2">${escapeHtml(shop.comment)}</p>` : ''}
                         </div>
                     </div>
-                    <div class="p-4 pt-0 border-t border-dark-border/40 mt-3 flex justify-between items-center bg-dark-card/50">
-                        <span class="text-[11px] text-dark-muted">追加: ${shop.author || '不明'}</span>
-                        <button onclick="toggleItayo('${shop.id}')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${hasItayo ? 'bg-orange-500 text-white shadow-sm' : 'bg-dark-input hover:bg-dark-border text-dark-muted border border-dark-border'}">
+                    <div class="p-3 sm:p-4 pt-0 border-t border-dark-border/40 mt-3 flex justify-between items-center bg-dark-card/50 gap-1">
+                        <span class="text-[10px] sm:text-[11px] text-dark-muted truncate">追加: ${shop.author || '不明'}</span>
+                        <button onclick="toggleItayo('${shop.id}')" class="px-2.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition flex items-center space-x-1 shrink-0 ${hasItayo ? 'bg-orange-500 text-white shadow-sm' : 'bg-dark-input hover:bg-dark-border text-dark-muted border border-dark-border'}">
                             <i class="fa-solid fa-check-circle"></i>
                             <span>イッタヨ！ (${itayoCount})</span>
                         </button>
