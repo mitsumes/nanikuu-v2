@@ -129,6 +129,12 @@
                     <span>マイ部屋へ戻る</span>
                 </button>
 
+                <!-- 訪問履歴確認ボタン（マイ部屋のときのみ表示） -->
+                <button id="visit-history-btn" onclick="openVisitHistoryModal()" class="bg-dark-input hover:bg-dark-border border border-blue-500/40 text-blue-400 text-xs px-3 py-1.5 rounded-full font-bold transition flex items-center space-x-1 shadow" title="部屋の訪問履歴">
+                    <i class="fa-solid fa-shoe-prints"></i>
+                    <span class="hidden sm:inline">訪問履歴</span>
+                </button>
+
                 <!-- マイ部屋のURLを一発でコピーするボタン -->
                 <button id="copy-myroom-btn" onclick="shareCurrentRoomUrl()" class="bg-dark-input hover:bg-dark-border border border-orange-500/40 text-orange-400 text-xs px-3 py-1.5 rounded-full font-bold transition flex items-center space-x-1 shadow" title="自分の部屋のURLをコピー">
                     <i class="fa-solid fa-share-nodes"></i>
@@ -187,7 +193,7 @@
             </div>
         </section>
 
-        <!-- タブ切り替え（行ったお店 / 行きたいお店 ※訪問中は行きたいお店を非表示または制限） -->
+        <!-- タブ切り替え（行ったお店 / 行きたいお店） -->
         <div class="flex border-b border-dark-border" id="tab-container">
             <button onclick="switchTab('visited')" id="tab-visited" class="flex-1 py-3 text-xs sm:text-sm font-bold border-b-2 border-orange-500 text-orange-400 transition flex items-center justify-center space-x-1.5">
                 <i class="fa-solid fa-utensils"></i>
@@ -245,6 +251,20 @@
             </button>
         </div>
     </nav>
+
+    <!-- モーダル：訪問履歴確認 -->
+    <div id="visit-history-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-dark-card w-full max-w-sm rounded-2xl border border-dark-border shadow-2xl p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-dark-border pb-3">
+                <h3 class="font-bold text-base text-blue-400"><i class="fa-solid fa-shoe-prints mr-2"></i>部屋の訪問履歴</h3>
+                <button onclick="closeVisitHistoryModal()" class="text-dark-muted hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div id="visit-history-container" class="space-y-2 max-h-60 overflow-y-auto">
+                <!-- 動的に生成 -->
+            </div>
+            <button onclick="closeVisitHistoryModal()" class="w-full bg-dark-border hover:bg-dark-muted/30 py-2 rounded-lg text-xs transition text-white">閉じる</button>
+        </div>
+    </div>
 
     <!-- モーダル：友達を探す / URL貼り付け -->
     <div id="friend-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -678,7 +698,7 @@
             const userParam = params.get('room');
             const copyBtnText = document.querySelector('#copy-myroom-btn span:last-child');
             const wantTabEl = document.getElementById('tab-want');
-            const wantTabTextEl = document.getElementById('tab-want-text');
+            const visitHistoryBtn = document.getElementById('visit-history-btn');
 
             if (userParam && userParam !== currentUserName) {
                 targetRoomUser = userParam;
@@ -686,32 +706,80 @@
                 document.getElementById('visiting-username').textContent = targetRoomUser;
                 document.getElementById('header-mode-badge').textContent = `${targetRoomUser}の部屋`;
                 document.getElementById('back-to-myroom-btn').classList.remove('hidden');
+                if(visitHistoryBtn) visitHistoryBtn.classList.add('hidden'); // 他人の部屋では訪問履歴ボタン非表示
                 document.getElementById('add-shop-footer-btn').classList.add('hidden'); // 訪問中は追加ボタン非表示
                 
-                // 【アクセス制御】他人の部屋を訪れた際、「行きたいお店」を非公開または制限する
-                if(wantTabEl) wantTabEl.style.display = 'none';
-                if(currentTab === 'want') {
-                    switchTab('visited'); // 強制的に行ったお店タブへ戻す
-                }
+                // 他人の部屋訪問時は行きたいお店タブを隠さず、自分の want リストを見られるようにする（要望3の対応）
+                if(wantTabEl) wantTabEl.style.display = 'flex';
 
                 if(copyBtnText) copyBtnText.textContent = '部屋URL';
                 checkFriendStatus(targetRoomUser);
+                recordVisitToRoom(targetRoomUser);
             } else {
                 targetRoomUser = '';
                 document.getElementById('visiting-banner').classList.add('hidden');
                 document.getElementById('header-mode-badge').textContent = 'マイページ';
                 document.getElementById('back-to-myroom-btn').classList.add('hidden');
+                if(visitHistoryBtn) visitHistoryBtn.classList.remove('hidden');
                 document.getElementById('add-shop-footer-btn').classList.remove('hidden');
                 
-                // 自分の部屋の時は行きたいお店タブを表示する
                 if(wantTabEl) wantTabEl.style.display = 'flex';
-
                 if(copyBtnText) copyBtnText.textContent = 'マイ部屋URL';
             }
         }
 
+        // 訪問履歴を相手のFirebaseに記録する
+        function recordVisitToRoom(ownerName) {
+            if (!currentUserName || ownerName === currentUserName) return;
+            const historyRef = getDatabaseRef().ref(`users/${ownerName}/visitHistory`);
+            // 同じユーザーの連続直近履歴が重複しないようにチェックするか、シンプルにpushする
+            historyRef.push({
+                visitor: currentUserName,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+        }
+
+        function openVisitHistoryModal() {
+            renderVisitHistory();
+            document.getElementById('visit-history-modal').classList.remove('hidden');
+        }
+        function closeVisitHistoryModal() {
+            document.getElementById('visit-history-modal').classList.add('hidden');
+        }
+
+        function renderVisitHistory() {
+            const container = document.getElementById('visit-history-container');
+            const historyRef = getDatabaseRef().ref(`users/${currentUserName}/visitHistory`);
+            
+            container.innerHTML = '<p class="text-xs text-dark-muted text-center py-4">読み込み中...</p>';
+            
+            historyRef.orderByChild('timestamp').limitToLast(20).once('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    container.innerHTML = '<p class="text-xs text-dark-muted text-center py-4">まだ誰も部屋に訪問していません。</p>';
+                    return;
+                }
+                
+                let html = '';
+                const items = [];
+                Object.keys(data).forEach(k => items.push(data[k]));
+                items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+                items.forEach(item => {
+                    const dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString('ja-JP', {month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'}) : '';
+                    html += `
+                        <div class="flex items-center justify-between bg-dark-input p-2.5 rounded-xl border border-dark-border">
+                            <span class="text-xs font-bold text-white"><i class="fa-solid fa-user-check text-blue-400 mr-2"></i>${escapeHtml(item.visitor)} さんが訪問</span>
+                            <span class="text-[10px] text-dark-muted">${dateStr}</span>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            });
+        }
+
         function goToMyRoom() {
-            window.location.href = window.location.pathname; // URLパラメータを消して自分の部屋へ
+            window.location.href = window.location.pathname; 
         }
 
         function shareCurrentRoomUrl() {
@@ -723,7 +791,6 @@
             });
         }
 
-        // --- フレンド機能ロジック ---
         function getFriendsList() {
             const list = localStorage.getItem('nanikuu_friends');
             return list ? JSON.parse(list) : [];
@@ -840,7 +907,6 @@
                 }
             }
         }
-        // ----------------------------
 
         function initMap() {
             try {
@@ -880,9 +946,6 @@
         }
 
         function switchTab(tab) {
-            // 他人の部屋にいる場合は want タブへの切り替えをブロックする（セキュリティ・プライバシー保護）
-            if (targetRoomUser && tab === 'want') return;
-
             currentTab = tab;
             const visitedBtn = document.getElementById('tab-visited');
             const wantBtn = document.getElementById('tab-want');
@@ -898,7 +961,10 @@
         }
 
         function loadShops() {
+            // 自分の部屋にいるときは自分のデータを、他人の部屋にいるときは相手のデータをロードする
+            // ただし、要望3に対応するため、自分の「行きたいお店」も確認・操作できるようにする
             const activeUser = targetRoomUser || currentUserName;
+            
             getDatabaseRef().ref(`users/${activeUser}/shops`).on('value', (snapshot) => {
                 const data = snapshot.val();
                 allShops = [];
@@ -908,33 +974,59 @@
                 if (data) {
                     Object.keys(data).forEach(key => {
                         const shop = { id: key, ...data[key] };
+                        // 他人の部屋にいるとき、自分が保存した「行きたいお店」も手元で併せて扱えるように分ける
                         allShops.push(shop);
-                        if (shop.listType === 'want') wantCount++;
+                        if ((shop.listType || 'visited') === 'want') wantCount++;
                         else visitedCount++;
                     });
                 }
-                allShops.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
-                document.getElementById('count-visited').textContent = visitedCount;
-                document.getElementById('count-want').textContent = wantCount;
-
-                const spinner = document.getElementById('loading-spinner');
-                if (spinner) spinner.classList.add('hidden');
-
-                filterShops();
-                renderMarkers();
-                renderTerritories();
-                updateExplorationCount();
-                updateRoulettePrefOptions();
-
-                if (justAddedShopId) {
-                    const targetShop = allShops.find(s => s.id === justAddedShopId);
-                    if (targetShop && targetShop.lat && targetShop.lng && map) {
-                        setTimeout(() => { map.flyTo([targetShop.lat, targetShop.lng], 15, { duration: 1.5 }); }, 300);
-                    }
-                    justAddedShopId = null;
+                
+                // もし他人の部屋にいて、自分の「行きたいお店」もロードしたい場合は自分のデータも取得する
+                if (targetRoomUser) {
+                    getDatabaseRef().ref(`users/${currentUserName}/shops`).once('value', (mySnap) => {
+                        const myData = mySnap.val();
+                        if (myData) {
+                            Object.keys(myData).forEach(key => {
+                                const shop = { id: 'my_' + key, ...myData[key] };
+                                if ((shop.listType || 'visited') === 'want') {
+                                    // 重複していなければ追加
+                                    if (!allShops.some(s => s.id === shop.id || s.name === shop.name)) {
+                                        allShops.push(shop);
+                                        wantCount++;
+                                    }
+                                }
+                            });
+                        }
+                        finalizeShopLoad(visitedCount, wantCount);
+                    });
+                } else {
+                    finalizeShopLoad(visitedCount, wantCount);
                 }
             });
+        }
+
+        function finalizeShopLoad(visitedCount, wantCount) {
+            allShops.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+            document.getElementById('count-visited').textContent = visitedCount;
+            document.getElementById('count-want').textContent = wantCount;
+
+            const spinner = document.getElementById('loading-spinner');
+            if (spinner) spinner.classList.add('hidden');
+
+            filterShops();
+            renderMarkers();
+            renderTerritories();
+            updateExplorationCount();
+            updateRoulettePrefOptions();
+
+            if (justAddedShopId) {
+                const targetShop = allShops.find(s => s.id === justAddedShopId);
+                if (targetShop && targetShop.lat && targetShop.lng && map) {
+                    setTimeout(() => { map.flyTo([targetShop.lat, targetShop.lng], 15, { duration: 1.5 }); }, 300);
+                }
+                justAddedShopId = null;
+            }
         }
 
         function updateRoulettePrefOptions() {
@@ -951,22 +1043,31 @@
         function renderMarkers() {
             if (!markersLayer) return;
             markersLayer.clearLayers();
-            // 他人の部屋にいる場合は want リストのピンを地図上に表示させない（アクセス制御）
+            
+            // 要望3対応：want リストであっても、自分で「イッタヨ」チェックをしたもの（あるいは自分の want リストで位置情報があるもの、または要望通りイッタヨ済み）は地図上にピンを表示する
             const visibleShops = allShops.filter(shop => {
                 const isWant = (shop.listType || 'visited') === 'want';
-                if (targetRoomUser && isWant) return false;
-                return (shop.listType || 'visited') === currentTab;
+                const itayoObj = shop.itayo || {};
+                const hasItayo = Object.values(itayoObj).some(name => name === currentUserName);
+                
+                // 行ったお店タブ、または wantタブでも自分がイッタヨしたものはピンを表示する
+                if (currentTab === 'visited') {
+                    if (targetRoomUser && isWant) return false; // 他人の部屋の want は除外
+                    return (shop.listType || 'visited') === 'visited' || hasItayo;
+                } else {
+                    return isWant && !hasItayo;
+                }
             });
 
             visibleShops.forEach(shop => {
                 if (shop.lat && shop.lng) {
                     const isNew = (shop.id === justAddedShopId);
-                    const pinColor = currentTab === 'want' ? '#fbbf24' : '#f97316';
+                    const pinColor = (shop.listType || 'visited') === 'want' ? '#fbbf24' : '#f97316';
                     const pinHtml = `
                         <div style="position: relative; width: 36px; height: 36px; cursor: pointer;" title="${escapeHtml(shop.name)}">
                             ${isNew ? '<div class="pin-shockwave"></div>' : ''}
                             <div style="background-color: ${pinColor}; width: 28px; height: 28px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.8); border: 2px solid #fff; position: absolute; top: 4px; left: 4px;">
-                                <i class="fa-solid ${currentTab === 'want' ? 'fa-bookmark' : 'fa-utensils'}" style="transform: rotate(45deg); color: #fff; font-size: 11px;"></i>
+                                <i class="fa-solid ${(shop.listType || 'visited') === 'want' ? 'fa-bookmark' : 'fa-utensils'}" style="transform: rotate(45deg); color: #fff; font-size: 11px;"></i>
                             </div>
                         </div>
                     `;
@@ -990,7 +1091,9 @@
                 const cleanName = getCleanCityName(item.pref, item.city);
                 const shopsInCity = allShops.filter(s => {
                     const isWant = (s.listType || 'visited') === 'want';
-                    if (targetRoomUser && isWant) return false;
+                    const itayoObj = s.itayo || {};
+                    const hasItayo = Object.values(itayoObj).some(name => name === currentUserName);
+                    if (targetRoomUser && isWant && !hasItayo) return false;
                     return s.pref === item.pref && getCleanCityName(s.pref, s.city) === cleanName && s.lat && s.lng;
                 });
                 if (shopsInCity.length > 0) {
@@ -1007,7 +1110,9 @@
         function updateExplorationCount() {
             const validCount = allShops.filter(s => {
                 const isWant = (s.listType || 'visited') === 'want';
-                if (targetRoomUser && isWant) return false;
+                const itayoObj = s.itayo || {};
+                const hasItayo = Object.values(itayoObj).some(name => name === currentUserName);
+                if (targetRoomUser && isWant && !hasItayo) return false;
                 return s.lat && s.lng;
             }).length;
             const rateEl = document.getElementById('exploration-rate');
@@ -1020,10 +1125,17 @@
 
             const filtered = allShops.filter(shop => {
                 const listType = shop.listType || 'visited';
-                // 訪問中で want リストの場合は厳格に非表示にする（アクセス制御）
-                if (targetRoomUser && listType === 'want') return false;
+                const itayoObj = shop.itayo || {};
+                const hasItayo = Object.values(itayoObj).some(name => name === currentUserName);
 
-                const matchTab = listType === currentTab;
+                let matchTab = false;
+                if (currentTab === 'visited') {
+                    matchTab = (listType === 'visited' || hasItayo);
+                    if (targetRoomUser && listType === 'want' && !hasItayo) matchTab = false;
+                } else {
+                    matchTab = (listType === 'want' && !hasItayo);
+                }
+
                 const matchKeyword = !keyword || 
                     shop.name?.toLowerCase().includes(keyword) ||
                     shop.pref?.toLowerCase().includes(keyword) ||
@@ -1059,10 +1171,13 @@
                     : `<div onclick="openDetailModal('${shop.id}')" class="h-20 sm:h-24 w-full bg-dark-input flex flex-col items-center justify-center text-dark-muted cursor-pointer hover:bg-dark-border/50 transition"><i class="fa-solid fa-utensils text-xl opacity-40 mb-1"></i><span class="text-[10px] opacity-60">詳細を見る</span></div>`;
 
                 const shortArea = `${shop.pref || ''} ${shop.city || ''}`;
-                const isMyRoom = (targetRoomUser === '');
+                
+                // 要望1の対応：自分の投稿（追加者が自分の名前）または自分の部屋で自分が投稿したものは「イッタヨ」をつけられないようにする
+                // ここでは author が自分の名前、または shop.author が currentUserName と一致する場合に制限
+                const isMyPost = (shop.author === currentUserName) || (targetRoomUser === '' && !shop.author);
 
                 let actionButtonsHtml = '';
-                if (isMyRoom) {
+                if (targetRoomUser === '') {
                     actionButtonsHtml = `
                         <div class="flex space-x-1 shrink-0">
                             <button onclick="openEditModal('${shop.id}')" class="text-dark-muted hover:text-white p-1 text-xs" title="編集"><i class="fa-solid fa-pen"></i></button>
@@ -1074,6 +1189,23 @@
                         <button onclick="copyToMyWantList('${shop.id}')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/40 text-[10px] font-bold px-2 py-1 rounded-lg transition flex items-center space-x-1">
                             <i class="fa-solid fa-bookmark"></i>
                             <span>行きたいに追加</span>
+                        </button>
+                    `;
+                }
+
+                // 要望1：自分の投稿にはイッタヨをつけれない
+                let itayoButtonHtml = '';
+                if (isMyPost) {
+                    itayoButtonHtml = `
+                        <span class="px-2 py-1.5 rounded-lg text-[10px] font-bold bg-dark-input text-dark-muted border border-dark-border cursor-not-allowed" title="自分の投稿にはイッタヨできません">
+                            <i class="fa-solid fa-ban"></i> 自分の投稿
+                        </span>
+                    `;
+                } else {
+                    itayoButtonHtml = `
+                        <button onclick="toggleItayo('${shop.id}')" class="px-2 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center space-x-1 ${hasItayo ? 'bg-orange-500 text-white shadow-sm' : 'bg-dark-input hover:bg-dark-border text-dark-muted border border-dark-border'}">
+                            <i class="fa-solid fa-check-circle"></i>
+                            <span>イッタヨ (${itayoCount})</span>
                         </button>
                     `;
                 }
@@ -1095,10 +1227,7 @@
                             <i class="fa-solid fa-map-pin text-orange-400"></i>
                             <span>地図</span>
                         </button>
-                        <button onclick="toggleItayo('${shop.id}')" class="px-2 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center space-x-1 ${hasItayo ? 'bg-orange-500 text-white shadow-sm' : 'bg-dark-input hover:bg-dark-border text-dark-muted border border-dark-border'}">
-                            <i class="fa-solid fa-check-circle"></i>
-                            <span>イッタヨ (${itayoCount})</span>
-                        </button>
+                        ${itayoButtonHtml}
                     </div>
                 `;
                 listEl.appendChild(card);
@@ -1110,7 +1239,7 @@
             if (!shop) return;
 
             const myWantRef = getDatabaseRef().ref(`users/${currentUserName}/shops`);
-            const newShopData = { ...shop, listType: 'want', author: `${currentUserName} (via ${targetRoomUser})`, createdAt: firebase.database.ServerValue.TIMESTAMP };
+            const newShopData = { ...shop, listType: 'want', author: `${targetRoomUser}`, createdAt: firebase.database.ServerValue.TIMESTAMP };
             delete newShopData.id;
             delete newShopData.itayo;
 
@@ -1166,7 +1295,9 @@
             const citiesMap = {};
             allShops.forEach(shop => {
                 const listType = shop.listType || 'visited';
-                if (targetRoomUser && listType === 'want') return; // アクセス制御：他人の want リストの都市は集計しない
+                const itayoObj = shop.itayo || {};
+                const hasItayo = Object.values(itayoObj).some(name => name === currentUserName);
+                if (targetRoomUser && listType === 'want' && !hasItayo) return; 
                 if (shop.city && shop.pref) {
                     const cleanName = getCleanCityName(shop.pref, shop.city);
                     const key = `${shop.pref}_${cleanName}`;
@@ -1285,21 +1416,36 @@
         }
 
         function toggleItayo(shopId) {
-            const activeUser = targetRoomUser || currentUserName;
-            const shopRef = getDatabaseRef().ref(`users/${activeUser}/shops/${shopId}/itayo`);
+            const shop = allShops.find(s => s.id === shopId);
+            if (!shop) return;
+
+            // 要望1のバリデーション：自分の投稿にはイッタヨをつけられない
+            if (shop.author === currentUserName) {
+                alert('自分の投稿にはイッタヨをつけることができません。');
+                return;
+            }
+
+            // 要望3対応：自分の want リスト（または相手の部屋からコピーした want リスト等）でイッタヨを推した場合の処理
+            // もしIDがマイリスト（'my_'で始まる、または自分が保存したデータ）にある場合
+            const activeUser = (shop.id && shop.id.startsWith('my_')) ? currentUserName : (targetRoomUser || currentUserName);
+            const actualDbId = shop.id.startsWith('my_') ? shop.id.replace('my_', '') : shopId;
+
+            const shopRef = getDatabaseRef().ref(`users/${activeUser}/shops/${actualDbId}/itayo`);
             shopRef.once('value', (snapshot) => {
                 const data = snapshot.val() || {};
                 let userKey = null;
                 Object.keys(data).forEach(k => { if (data[k] === currentUserName) userKey = k; });
-                if (userKey) shopRef.child(userKey).remove();
-                else shopRef.push(currentUserName);
+                if (userKey) {
+                    shopRef.child(userKey).remove();
+                } else {
+                    shopRef.push(currentUserName);
+                }
             });
         }
 
         function openRouletteModal() { document.getElementById('roulette-modal').classList.remove('hidden'); }
         function closeRouletteModal() { document.getElementById('roulette-modal').classList.add('hidden'); }
         function startRoulette() {
-            // 訪問中の場合は公開されているデータ（visitedなど）からのみ抽選対象にする
             const availableShops = allShops.filter(s => {
                 const listType = s.listType || 'visited';
                 if (targetRoomUser && listType === 'want') return false;
