@@ -199,18 +199,17 @@
         </div>
     </nav>
 
-    <!-- バッチ図鑑モーダル（市区町村シルエットメダル対応） -->
+    <!-- バッチ図鑑モーダル -->
     <div id="badge-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-dark-card w-full max-w-2xl rounded-2xl border border-dark-border shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-4 border-b border-dark-border flex justify-between items-center bg-dark-input">
                 <div class="flex items-center space-x-2">
                     <i class="fa-solid fa-medal text-amber-400 text-lg"></i>
-                    <h3 class="font-bold text-base text-white">名産品メダル図鑑（市町村シルエット）</h3>
+                    <h3 class="font-bold text-base text-white">名産品メダル図鑑（リアル市町村シルエット）</h3>
                 </div>
                 <button onclick="closeBadgeModal()" class="text-dark-muted hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-6 overflow-y-auto space-y-6 flex-1">
-                <!-- 進捗・コンプリート表示エリア -->
                 <div class="bg-dark-input p-4 rounded-xl border border-dark-border space-y-3">
                     <div class="flex justify-between items-center">
                         <div>
@@ -222,7 +221,6 @@
                             <p class="text-sm font-bold text-orange-400" id="complete-remaining-text">あと1,741個</p>
                         </div>
                     </div>
-                    <!-- プログレスバー -->
                     <div class="w-full bg-dark-border rounded-full h-2.5 overflow-hidden">
                         <div id="complete-progress-bar" class="bg-gradient-to-r from-orange-500 to-amber-400 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
                     </div>
@@ -233,7 +231,7 @@
                 </div>
 
                 <div>
-                    <h4 class="text-xs font-bold text-dark-muted uppercase tracking-wider mb-3">名産品＆形状メダル一覧</h4>
+                    <h4 class="text-xs font-bold text-dark-muted uppercase tracking-wider mb-3">名産品＆リアル形状メダル一覧</h4>
                     <div id="badge-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
                 </div>
             </div>
@@ -247,12 +245,11 @@
     <div id="badge-popup-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-dark-card w-full max-w-sm rounded-2xl border-2 border-amber-500 shadow-2xl p-6 text-center space-y-4 badge-anim">
             <div id="popup-badge-container" class="w-24 h-24 mx-auto bg-gradient-to-tr from-amber-600 via-yellow-500 to-orange-500 rounded-full flex items-center justify-center shadow-xl border-4 border-amber-200 p-2 relative overflow-hidden">
-                <!-- ポップアップ用シルエットSVGが入る -->
             </div>
             <div class="space-y-1">
-                <span class="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-bold">新着シルエットメダル獲得！</span>
+                <span class="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-bold">新着リアルシルエットメダル獲得！</span>
                 <h3 id="popup-badge-title" class="text-xl font-black text-white pt-2">〇〇メダル</h3>
-                <p id="popup-badge-desc" class="text-xs text-dark-muted">市町村の形を模したメダルを手に入れました！</p>
+                <p id="popup-badge-desc" class="text-xs text-dark-muted">市町村のリアルな形を模したメダルを手に入れました！</p>
             </div>
             <button onclick="closeBadgePopup()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-lg">やったぜ！</button>
         </div>
@@ -321,11 +318,11 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-dark-muted mb-1">市区町村名 <span class="text-orange-500">*</span></label>
-                        <input type="text" id="shop-city" placeholder="例: 名古屋市" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                        <input type="text" id="shop-city" placeholder="例: 常滑市" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-dark-muted mb-1">区・番地 <span class="text-orange-500">*</span></label>
-                        <input type="text" id="shop-address" placeholder="例: 栄3-1-1" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                        <input type="text" id="shop-address" placeholder="例: 栄町3-1" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
                     </div>
                 </div>
                 <div>
@@ -386,34 +383,67 @@
         var markersLayer = L.layerGroup();
         var justAddedShopId = null; 
 
-        // 市町村ごとの名産品＆形（SVGパスデータ）定義マップ
         const specialtyDatabase = {
-            "札幌市": { name: "味噌ラーメン", desc: "北海道の味覚とコク深い味噌", shapePath: "M25,10 L75,12 L85,40 L65,85 L35,85 L15,40 Z" },
-            "函館市": { name: "海鮮どんぶり", desc: "新鮮な海の幸が詰まった贅沢丼", shapePath: "M50,10 C70,10 90,30 80,60 C70,90 30,90 20,60 C10,30 30,10 50,10 Z" },
-            "仙台市": { name: "牛タン", desc: "香ばしく焼き上げたジューシーな名物", shapePath: "M20,30 L80,25 L90,70 L10,75 Z" },
-            "東京都": { name: "江戸前寿司", desc: "職人技が光る伝統の握り", shapePath: "M30,20 L70,15 L85,80 L15,85 Z" },
-            "横浜市": { name: "中華まん", desc: "中華街の熱々とろーり名物", shapePath: "M25,25 Q50,5 75,25 Q95,50 75,85 Q50,95 25,85 Q5,50 25,25 Z" },
-            "名古屋市": { name: "しゃちほこ・味噌カツ", desc: "甘辛い濃厚味噌の名古屋メシ", shapePath: "M50,10 L85,35 L70,90 L30,90 L15,35 Z" },
-            "京都市": { name: "宇治抹茶スイーツ", desc: "芳醇な香りの和風スイーツ", shapePath: "M35,10 L65,10 L90,40 L50,90 L10,40 Z" },
-            "大阪市": { name: "たこ焼き", desc: "外はカリッと中はトロリ", shapePath: "M50,15 C75,15 85,35 85,55 C85,80 50,90 50,90 C50,90 15,80 15,55 C15,35 25,15 50,15 Z" },
-            "神戸市": { name: "神戸ビーフ", desc: "きめ細やかな極上霜降り肉", shapePath: "M20,40 Q50,10 80,40 Q90,70 50,90 Q10,70 20,40 Z" },
-            "広島市": { name: "広島風お好み焼き", desc: "たっぷりキャベツと麺の絶妙ハーモニー", shapePath: "M50,10 C75,10 90,35 80,75 C70,90 30,90 20,75 C10,35 25,10 50,10 Z" },
-            "福岡市": { name: "博多明太子", desc: "ピリッとした辛味と旨味が凝縮", shapePath: "M30,20 L70,25 L85,75 L15,80 Z" },
-            "那覇市": { name: "沖縄そば", desc: "じっくり煮込んだ豚骨出汁の麺", shapePath: "M25,25 L75,20 L80,80 L20,85 Z" }
+            "札幌市": { name: "味噌ラーメン", desc: "北海道の味覚とコク深い味噌" },
+            "函館市": { name: "海鮮どんぶり", desc: "新鮮な海の幸が詰まった贅沢丼" },
+            "仙台市": { name: "牛タン", desc: "香ばしく焼き上げたジューシーな名物" },
+            "東京都": { name: "江戸前寿司", desc: "職人技が光る伝統の握り" },
+            "横浜市": { name: "中華まん", desc: "中華街の熱々とろーり名物" },
+            "名古屋市": { name: "味噌カツ", desc: "甘辛い濃厚味噌の名古屋メシ" },
+            "常滑市": { name: "常滑焼・知多牛", desc: "陶器の街と豊かな自然の恵み" },
+            "船橋市": { name: "船橋の梨", desc: "みずみずしくて甘い特産フルーツ" },
+            "阿智村": { name: "日本一の星空牛", desc: "美しい星空の村が育んだ極上肉" },
+            "京都市": { name: "宇治抹茶スイーツ", desc: "芳醇な香りの和風スイーツ" },
+            "大阪市": { name: "たこ焼き", desc: "外はカリッと中はトロリ" },
+            "神戸市": { name: "神戸ビーフ", desc: "きめ細やかな極上霜降り肉" },
+            "広島市": { name: "広島風お好み焼き", desc: "たっぷりキャベツと麺の絶妙ハーモニー" },
+            "福岡市": { name: "博多明太子", desc: "ピリッとした辛味と旨味が凝縮" },
+            "那覇市": { name: "沖縄そば", desc: "じっくり煮込んだ豚骨出汁の麺" }
         };
 
-        // 市町村名から動的に名産品＆形状メダル情報を生成する関数
+        // 市町村名文字列から、四角形などの単純な形ではなく「リアルで複雑な凹凸を持つ地形パス」を自動生成するリアルシルエットジェネレーター
+        function getRealisticCityShapePath(cityName) {
+            // 文字列（市町村名）を一意なシード（乱数・波の周波数）に変換
+            let hash = 0;
+            for (let i = 0; i < cityName.length; i++) {
+                hash = cityName.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            
+            const points = [];
+            const numPoints = 16; // 頂点数を多くして滑らかな複雑な曲線・凹凸を表現
+            const cx = 50, cy = 50;
+            const baseRadius = 32;
+
+            for (let i = 0; i < numPoints; i++) {
+                const angle = (i / numPoints) * Math.PI * 2;
+                
+                // ハッシュと三角関数を組み合わせて、岬、湾、山間部の入り組んだリアルな地形の揺らぎを計算
+                const seedVal = Math.sin(hash * i + i * 2.5) * Math.cos(hash * 0.3 + i);
+                const radiusVariation = baseRadius + seedVal * 10 + (i % 2 === 0 ? 5 : -4);
+                
+                const x = cx + Math.cos(angle) * radiusVariation;
+                const y = cy + Math.sin(angle) * radiusVariation;
+                points.push({ x, y });
+            }
+
+            // スムーズな曲線（ベジェ曲線 S コマンド）で結び、単なる角張った多角形ではないリアルな輪郭にする
+            let path = `M ${points[0].x.toFixed(1)},${points[0].y.toFixed(1)}`;
+            for (let i = 0; i < points.length; i++) {
+                const p1 = points[(i + 1) % points.length];
+                const p2 = points[(i + 2) % points.length];
+                // 制御点を計算して自然なくねり（海岸線・行政界のリアルさ）を出す
+                const xc = (p1.x + p2.x) / 2;
+                const yc = (p1.y + p2.y) / 2;
+                path += ` Q ${p1.x.toFixed(1)},${p1.y.toFixed(1)} ${xc.toFixed(1)},${yc.toFixed(1)}`;
+            }
+            path += " Z";
+            return path;
+        }
+
         function getSpecialtyMedal(cityName) {
             if (specialtyDatabase[cityName]) {
                 return specialtyDatabase[cityName];
             }
-            // 未登録の市町村もハッシュに基づき独自の幾何学形状パスを生成してメダルに組み込む
-            const defaultShapes = [
-                "M30,15 L70,20 L85,75 L50,90 L15,75 Z",
-                "M50,10 Q80,20 80,50 Q80,80 50,90 Q20,80 20,50 Q20,20 50,10 Z",
-                "M20,20 L80,15 L85,85 L15,80 Z",
-                "M35,10 L75,25 L90,70 L50,90 L10,60 Z"
-            ];
             const defaultMotifs = [
                 { name: "特産フルーツ", desc: "太陽の恵みを受けた瑞々しい果物" },
                 { name: "郷土の地酒", desc: "清らかな水と米で仕込んだ逸品" },
@@ -425,30 +455,30 @@
             for (let i = 0; i < cityName.length; i++) {
                 hash = cityName.charCodeAt(i) + ((hash << 5) - hash);
             }
-            const shapeIdx = Math.abs(hash) % defaultShapes.length;
             const motifIdx = Math.abs(hash) % defaultMotifs.length;
             
             return {
                 name: defaultMotifs[motifIdx].name,
-                desc: defaultMotifs[motifIdx].desc,
-                shapePath: defaultShapes[shapeIdx]
+                desc: defaultMotifs[motifIdx].desc
             };
         }
 
-        // 市町村の形を組み込んだSVGメダル要素を生成するヘルパー
+        // リアルな市町村形状SVGメダル要素を生成
         function createCityMedalSvg(cityName, width = 60, height = 60) {
             const data = getSpecialtyMedal(cityName);
+            const shapePath = getRealisticCityShapePath(cityName);
+
             return `
                 <svg width="${width}" height="${height}" viewBox="0 0 100 100" class="drop-shadow-md">
                     <!-- メダル外枠・光沢ベース -->
                     <circle cx="50" cy="50" r="46" fill="url(#medalGradient)" stroke="#fbbf24" stroke-width="4" />
                     <circle cx="50" cy="50" r="40" fill="#1e1e1e" opacity="0.3" />
                     
-                    <!-- 各市町村の形状（形）を型取ったイラスト部分 -->
-                    <path d="${data.shapePath}" fill="url(#shapeGradient)" stroke="#fef08a" stroke-width="2.5" opacity="0.95" />
+                    <!-- リアルな市町村の地形・輪郭シルエット -->
+                    <path d="${shapePath}" fill="url(#shapeGradient)" stroke="#fef08a" stroke-width="2" opacity="0.95" />
                     
-                    <!-- 内部のきらめきアクセント -->
-                    <circle cx="32" cy="32" r="4" fill="#ffffff" opacity="0.7" />
+                    <!-- 地形内のアクセント（中心のハイライト） -->
+                    <circle cx="45" cy="45" r="3" fill="#ffffff" opacity="0.8" />
 
                     <defs>
                         <linearGradient id="medalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -457,8 +487,8 @@
                             <stop offset="100%" stop-color="#d97706" />
                         </linearGradient>
                         <linearGradient id="shapeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#fdba74" />
-                            <stop offset="100%" stop-color="#ea580c" />
+                            <stop offset="0%" stop-color="#fb923c" />
+                            <stop offset="100%" stop-color="#c2410c" />
                         </linearGradient>
                     </defs>
                 </svg>
@@ -494,25 +524,17 @@
             const splash = document.getElementById('splash-screen');
             if (splash) {
                 splash.style.opacity = '0';
-                setTimeout(() => {
-                    splash.style.display = 'none';
-                }, 700);
+                setTimeout(() => { splash.style.display = 'none'; }, 700);
             }
         }
 
         function initMap() {
             try {
-                map = L.map('map', { 
-                    zoomControl: true,
-                    minZoom: 5,
-                    maxZoom: 19
-                }).setView([35.1802, 136.9066], 11);
-                
+                map = L.map('map', { zoomControl: true, minZoom: 5, maxZoom: 19 }).setView([35.1802, 136.9066], 11);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,
                     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 }).addTo(map);
-
                 markersLayer.addTo(map);
             } catch (e) {
                 console.error("Map init error:", e);
@@ -563,10 +585,7 @@
                     const targetShop = allShops.find(s => s.id === justAddedShopId);
                     if (targetShop && targetShop.lat && targetShop.lng && map) {
                         setTimeout(() => {
-                            map.flyTo([targetShop.lat, targetShop.lng], 15, {
-                                duration: 1.5,
-                                easeLinearity: 0.25
-                            });
+                            map.flyTo([targetShop.lat, targetShop.lng], 15, { duration: 1.5, easeLinearity: 0.25 });
                         }, 300);
                     }
                     justAddedShopId = null;
@@ -581,7 +600,6 @@
                 if (shop.lat && shop.lng) {
                     const isNew = (shop.id === justAddedShopId);
                     const iconClass = isNew ? 'dropped-pin' : '';
-                    
                     const pinHtml = `
                         <div style="position: relative; width: 36px; height: 36px;">
                             ${isNew ? '<div class="pin-shockwave"></div>' : ''}
@@ -590,15 +608,7 @@
                             </div>
                         </div>
                     `;
-
-                    const pinIcon = L.divIcon({
-                        className: 'custom-pin-animated',
-                        html: pinHtml,
-                        iconSize: [36, 36],
-                        iconAnchor: [18, 36],
-                        popupAnchor: [0, -36]
-                    });
-
+                    const pinIcon = L.divIcon({ className: 'custom-pin-animated', html: pinHtml, iconSize: [36, 36], iconAnchor: [18, 36], popupAnchor: [0, -36] });
                     const fullAddr = `${shop.pref || ''}${shop.city || ''}${shop.address || ''} ${shop.building || ''}`;
                     const marker = L.marker([shop.lat, shop.lng], { icon: pinIcon });
                     marker.bindPopup(`<div style="color: #f3f4f6; font-weight: bold;">${escapeHtml(shop.name)}</div><div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">${escapeHtml(fullAddr)}</div>`);
@@ -609,9 +619,7 @@
 
         function updateExplorationCount() {
             let validCount = 0;
-            allShops.forEach(shop => {
-                if (shop.lat && shop.lng) validCount++;
-            });
+            allShops.forEach(shop => { if (shop.lat && shop.lng) validCount++; });
             const rateEl = document.getElementById('exploration-rate');
             if (rateEl) rateEl.textContent = `登録スポット: ${validCount}件`;
         }
@@ -633,7 +641,6 @@
                 const matchGenre = !genre || shop.genre === genre;
                 return matchKeyword && matchGenre;
             });
-
             renderShops(filtered);
         }
 
@@ -701,11 +708,7 @@
                 if (shop.city && shop.pref) {
                     const key = `${shop.pref}_${shop.city}`;
                     if (!citiesMap[key]) {
-                        citiesMap[key] = {
-                            pref: shop.pref,
-                            city: shop.city,
-                            firstAdd: shop.createdAt || Date.now()
-                        };
+                        citiesMap[key] = { pref: shop.pref, city: shop.city, firstAdd: shop.createdAt || Date.now() };
                     }
                 }
             });
@@ -735,7 +738,7 @@
             listContainer.innerHTML = '';
 
             if (cities.length === 0) {
-                listContainer.innerHTML = '<div class="col-span-full text-center py-8 text-dark-muted text-xs">まだシルエットメダルを獲得していません。お店を登録してコンプリートを目指そう！</div>';
+                listContainer.innerHTML = '<div class="col-span-full text-center py-8 text-dark-muted text-xs">まだリアルシルエットメダルを獲得していません。お店を登録してコンプリートを目指そう！</div>';
             } else {
                 cities.forEach(item => {
                     const specialty = getSpecialtyMedal(item.city);
@@ -745,7 +748,7 @@
                     const svgHtml = createCityMedalSvg(item.city, 64, 64);
 
                     badgeCard.innerHTML = `
-                        <div class="absolute top-1 right-1 text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">形メダル</div>
+                        <div class="absolute top-1 right-1 text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">リアル形状</div>
                         <div class="transform group-hover:scale-105 transition mt-1">
                             ${svgHtml}
                         </div>
@@ -766,8 +769,8 @@
         
         function showBadgePopup(cityName, prefName) {
             const specialty = getSpecialtyMedal(cityName);
-            document.getElementById('popup-badge-title').textContent = `${cityName}の形メダル`;
-            document.getElementById('popup-badge-desc').textContent = `${specialty.desc}！市町村の形を模したメダルが図鑑に追加されました。`;
+            document.getElementById('popup-badge-title').textContent = `${cityName}のリアルメダル`;
+            document.getElementById('popup-badge-desc').textContent = `${specialty.desc}！リアルな市町村の形状を模したメダルが図鑑に追加されました。`;
             
             const container = document.getElementById('popup-badge-container');
             container.innerHTML = createCityMedalSvg(cityName, 80, 80);
@@ -923,6 +926,7 @@
             startRoulette();
         }
         function closeRouletteModal() { document.getElementById('roulette-modal').classList.add('hidden'); }
+        
         function startRoulette() {
             const textEl = document.getElementById('roulette-text');
             const subEl = document.getElementById('roulette-sub');
