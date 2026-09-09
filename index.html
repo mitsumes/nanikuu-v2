@@ -187,7 +187,7 @@
             </button>
             <button onclick="openBadgeModal()" class="flex-1 bg-dark-input hover:bg-dark-border border border-amber-500/40 text-amber-400 font-medium py-3 px-2 rounded-xl text-xs transition flex flex-col sm:flex-row items-center justify-center gap-1">
                 <i class="fa-solid fa-medal text-amber-400 text-base"></i>
-                <span>バッチ図鑑</span>
+                <span>市町村図鑑</span>
             </button>
             <button onclick="openRouletteModal()" class="w-14 bg-dark-input hover:bg-dark-border border border-orange-500/40 text-orange-400 font-medium py-3 px-2 rounded-xl transition flex items-center justify-center" title="ガチャ">
                 <i class="fa-solid fa-dice text-xl animate-bounce"></i>
@@ -199,13 +199,13 @@
         </div>
     </nav>
 
-    <!-- バッチ図鑑モーダル -->
+    <!-- 市町村メダル図鑑モーダル -->
     <div id="badge-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-dark-card w-full max-w-2xl rounded-2xl border border-dark-border shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-4 border-b border-dark-border flex justify-between items-center bg-dark-input">
                 <div class="flex items-center space-x-2">
                     <i class="fa-solid fa-medal text-amber-400 text-lg"></i>
-                    <h3 class="font-bold text-base text-white">名産品メダル図鑑（市町村名ネームプレート）</h3>
+                    <h3 class="font-bold text-base text-white">市町村メダル図鑑</h3>
                 </div>
                 <button onclick="closeBadgeModal()" class="text-dark-muted hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
@@ -231,7 +231,7 @@
                 </div>
 
                 <div>
-                    <h4 class="text-xs font-bold text-dark-muted uppercase tracking-wider mb-3">名産品＆ネームメダル一覧</h4>
+                    <h4 class="text-xs font-bold text-dark-muted uppercase tracking-wider mb-3">市町村メダル一覧</h4>
                     <div id="badge-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
                 </div>
             </div>
@@ -249,7 +249,7 @@
             <div class="space-y-1">
                 <span class="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-bold">新着市町村メダル獲得！</span>
                 <h3 id="popup-badge-title" class="text-xl font-black text-white pt-2">〇〇メダル</h3>
-                <p id="popup-badge-desc" class="text-xs text-dark-muted">市町村の名前が刻まれたネメダルを手に入れました！</p>
+                <p id="popup-badge-desc" class="text-xs text-dark-muted">新しい市町村メダルを手に入れました！</p>
             </div>
             <button onclick="closeBadgePopup()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-lg">やったぜ！</button>
         </div>
@@ -318,7 +318,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-dark-muted mb-1">市区町村名 <span class="text-orange-500">*</span></label>
-                        <input type="text" id="shop-city" placeholder="例: 常滑市" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+                        <input type="text" id="shop-city" placeholder="例: 常滑市 または 新宿区" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-dark-muted mb-1">区・番地 <span class="text-orange-500">*</span></label>
@@ -381,14 +381,60 @@
         var allShops = [];
         var map;
         var markersLayer = L.layerGroup();
-        var territoryLayer = L.layerGroup(); // 制覇エリア（色が変わる領域）用レイヤー
+        var territoryLayer = L.layerGroup();
         var justAddedShopId = null; 
+
+        // 長い名前からスッキリとした市町村名（東京都・名古屋市は区単位）を抽出する関数
+        function getCleanCityName(pref, rawCity) {
+            if (!rawCity) return '';
+
+            // 東京都23区リスト
+            const tokyo23 = [
+                '千代田区', '中央区', '港区', '新宿区', '文京区', '台東区', '墨田区', 
+                '江東区', '品川区', '目黒区', '大田区', '世田谷区', '渋谷区', '中野区', 
+                '杉並区', '豊島区', '北区', '荒川区', '板橋区', '練馬区', '足立区', '葛飾区', '江戸川区'
+            ];
+            if (pref === '東京都') {
+                for (const ward of tokyo23) {
+                    if (rawCity.includes(ward)) return ward;
+                }
+            }
+
+            // 名古屋市各区リスト
+            const nagoyaWards = [
+                '千種区', '東区', '北区', '西区', '中村区', '中区', '昭和区', 
+                '瑞穂区', '熱田区', '中川区', '港区', '南区', '守山区', '緑区', '名東区', '天白区'
+            ];
+            if (pref === '愛知県' && (rawCity.includes('名古屋市') || nagoyaWards.some(w => rawCity.includes(w)))) {
+                for (const ward of nagoyaWards) {
+                    if (rawCity.includes(ward)) return ward;
+                }
+            }
+
+            // 一般的な「〜市」「〜区」「〜町」「〜村」を抽出（例: "常滑市榎戸町" -> "常滑市"）
+            const match = rawCity.match(/.*?(市|区|町|村)/);
+            if (match) {
+                let extracted = match[0];
+                // 郡名が含まれている場合（例: 下伊那郡阿智村）は、郡より後ろの部分（阿智村）を優先
+                if (extracted.includes('郡')) {
+                    const parts = extracted.split('郡');
+                    if (parts.length > 1 && parts[1]) {
+                        return parts[1];
+                    }
+                }
+                return extracted;
+            }
+            return rawCity;
+        }
 
         const specialtyDatabase = {
             "札幌市": { name: "味噌ラーメン", desc: "北海道の味覚とコク深い味噌" },
             "函館市": { name: "海鮮どんぶり", desc: "新鮮な海の幸が詰まった贅沢丼" },
             "仙台市": { name: "牛タン", desc: "香ばしく焼き上げたジューシーな名物" },
-            "東京都": { name: "江戸前寿司", desc: "職人技が光る伝統の握り" },
+            "新宿区": { name: "都心の絶品グルメ", desc: "眠らない街が生んだ多彩な味覚" },
+            "渋谷区": { name: "トレンドカフェ", desc: "流行の発信地で味わう先端スイーツ" },
+            "中区": { name: "名古屋めし", desc: "栄・久屋大通エリアの豪華な美食" },
+            "中村区": { name: "駅西グルメ", desc: "名古屋の玄関口で味わう名物" },
             "横浜市": { name: "中華まん", desc: "中華街の熱々とろーり名物" },
             "名古屋市": { name: "味噌カツ", desc: "甘辛い濃厚味噌の名古屋メシ" },
             "常滑市": { name: "常滑焼・知多牛", desc: "陶器の街と豊かな自然の恵み" },
@@ -402,20 +448,20 @@
             "那覇市": { name: "沖縄そば", desc: "じっくり煮込んだ豚骨出汁の麺" }
         };
 
-        function getSpecialtyMedal(cityName) {
-            if (specialtyDatabase[cityName]) {
-                return specialtyDatabase[cityName];
+        function getSpecialtyMedal(cleanCityName) {
+            if (specialtyDatabase[cleanCityName]) {
+                return specialtyDatabase[cleanCityName];
             }
             const defaultMotifs = [
-                { name: "特産フルーツ", desc: "太陽の恵みを受けた瑞々しい果物" },
+                { name: "ご当地名物", desc: "地元で愛される自慢の味覚" },
                 { name: "郷土の地酒", desc: "清らかな水と米で仕込んだ逸品" },
                 { name: "特選和牛", desc: "豊かな自然で育った極上の肉料理" },
                 { name: "新鮮な海の幸", desc: "荒波にもまれた極上の魚介" },
-                { name: "名物どんぶり", desc: "地元食材をふんだんに使った自慢の丼" }
+                { name: "自慢のどんぶり", desc: "地元食材をふんだんに使った自慢の丼" }
             ];
             let hash = 0;
-            for (let i = 0; i < cityName.length; i++) {
-                hash = cityName.charCodeAt(i) + ((hash << 5) - hash);
+            for (let i = 0; i < cleanCityName.length; i++) {
+                hash = cleanCityName.charCodeAt(i) + ((hash << 5) - hash);
             }
             const motifIdx = Math.abs(hash) % defaultMotifs.length;
             
@@ -426,13 +472,13 @@
         }
 
         // 市町村の名前をメダルに組み込んだSVGデザイン生成
-        function createCityNameMedalSvg(cityName, width = 60, height = 60) {
-            const specialty = getSpecialtyMedal(cityName);
+        function createCityNameMedalSvg(cleanCityName, width = 60, height = 60) {
+            const specialty = getSpecialtyMedal(cleanCityName);
             
             // 文字数に応じてフォントサイズを動的に調整
             let fontSize = 16;
-            if (cityName.length >= 5) fontSize = 13;
-            if (cityName.length >= 7) fontSize = 11;
+            if (cleanCityName.length >= 5) fontSize = 13;
+            if (cleanCityName.length >= 7) fontSize = 11;
 
             return `
                 <svg width="${width}" height="${height}" viewBox="0 0 100 100" class="drop-shadow-md">
@@ -442,9 +488,9 @@
                     <circle cx="50" cy="50" r="35" fill="none" stroke="#fef08a" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.6" />
                     
                     <!-- 市町村名テキスト（ネームプレート風） -->
-                    <text x="50" y="44" fill="#ffffff" font-size="${fontSize}" font-weight="900" text-anchor="middle" dominant-baseline="central" style="letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">${escapeHtml(cityName)}</text>
+                    <text x="50" y="44" fill="#ffffff" font-size="${fontSize}" font-weight="900" text-anchor="middle" dominant-baseline="central" style="letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">${escapeHtml(cleanCityName)}</text>
                     
-                    <!-- 名産品サブタイトル -->
+                    <!-- サブタイトル -->
                     <text x="50" y="68" fill="#fb923c" font-size="9" font-weight="bold" text-anchor="middle" dominant-baseline="central">${escapeHtml(specialty.name)}</text>
 
                     <defs>
@@ -543,7 +589,7 @@
                 if (spinner) spinner.classList.add('hidden');
                 filterShops();
                 renderMarkers();
-                renderTerritories(); // 制覇した市町村のエリア色変更を反映
+                renderTerritories();
                 updateExplorationCount();
 
                 if (justAddedShopId) {
@@ -582,31 +628,28 @@
             });
         }
 
-        // 地図上で制覇した市町村のエリアの色が変わるように描画する関数
         function renderTerritories() {
             if (!territoryLayer) return;
             territoryLayer.clearLayers();
 
             const cities = getUniqueCities();
             cities.forEach(item => {
-                // 各市町村に属するショップの緯度経度を抽出して中心地とする
-                const shopsInCity = allShops.filter(s => s.pref === item.pref && s.city === item.city && s.lat && s.lng);
+                const cleanName = getCleanCityName(item.pref, item.city);
+                const shopsInCity = allShops.filter(s => s.pref === item.pref && getCleanCityName(s.pref, s.city) === cleanName && s.lat && s.lng);
                 if (shopsInCity.length > 0) {
-                    // 平均座標を計算
                     let sumLat = 0, sumLng = 0;
                     shopsInCity.forEach(s => { sumLat += s.lat; sumLng += s.lng; });
                     const avgLat = sumLat / shopsInCity.length;
                     const avgLng = sumLng / shopsInCity.length;
 
-                    // 制覇した市町村のエリアを金色・オレンジのカラーで彩る（色が変わる演出）
                     const circle = L.circle([avgLat, avgLng], {
                         color: '#f59e0b',
                         fillColor: '#f97316',
                         fillOpacity: 0.35,
-                        radius: 3500, // 約3.5km圏内の市町村エリア
+                        radius: 3500,
                         weight: 2
                     });
-                    circle.bindPopup(`<div style="color: #f3f4f6; font-weight: bold;"><i class="fa-solid fa-medal text-amber-400 mr-1"></i>制覇エリア: ${escapeHtml(item.pref)} ${escapeHtml(item.city)}</div>`);
+                    circle.bindPopup(`<div style="color: #f3f4f6; font-weight: bold;"><i class="fa-solid fa-medal text-amber-400 mr-1"></i>制覇エリア: ${escapeHtml(item.pref)} ${escapeHtml(cleanName)}</div>`);
                     territoryLayer.addLayer(circle);
                 }
             });
@@ -701,9 +744,10 @@
             const citiesMap = {};
             allShops.forEach(shop => {
                 if (shop.city && shop.pref) {
-                    const key = `${shop.pref}_${shop.city}`;
+                    const cleanName = getCleanCityName(shop.pref, shop.city);
+                    const key = `${shop.pref}_${cleanName}`;
                     if (!citiesMap[key]) {
-                        citiesMap[key] = { pref: shop.pref, city: shop.city, firstAdd: shop.createdAt || Date.now() };
+                        citiesMap[key] = { pref: shop.pref, city: cleanName, firstAdd: shop.createdAt || Date.now() };
                     }
                 }
             });
@@ -733,7 +777,7 @@
             listContainer.innerHTML = '';
 
             if (cities.length === 0) {
-                listContainer.innerHTML = '<div class="col-span-full text-center py-8 text-dark-muted text-xs">まだ市町村名ネームメダルを獲得していません。お店を登録してコンプリートを目指そう！</div>';
+                listContainer.innerHTML = '<div class="col-span-full text-center py-8 text-dark-muted text-xs">まだ市町村メダルを獲得していません。お店を登録してコンプリートを目指そう！</div>';
             } else {
                 cities.forEach(item => {
                     const specialty = getSpecialtyMedal(item.city);
@@ -743,7 +787,7 @@
                     const svgHtml = createCityNameMedalSvg(item.city, 64, 64);
 
                     badgeCard.innerHTML = `
-                        <div class="absolute top-1 right-1 text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">ネーム刻印</div>
+                        <div class="absolute top-1 right-1 text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">メダル</div>
                         <div class="transform group-hover:scale-105 transition mt-1">
                             ${svgHtml}
                         </div>
@@ -763,12 +807,13 @@
         function closeBadgeModal() { document.getElementById('badge-modal').classList.add('hidden'); }
         
         function showBadgePopup(cityName, prefName) {
-            const specialty = getSpecialtyMedal(cityName);
-            document.getElementById('popup-badge-title').textContent = `${cityName}のメダル`;
-            document.getElementById('popup-badge-desc').textContent = `${specialty.desc}！市町村名が刻まれたネームメダルを図鑑に追加しました。`;
+            const cleanName = getCleanCityName(prefName, cityName);
+            const specialty = getSpecialtyMedal(cleanName);
+            document.getElementById('popup-badge-title').textContent = `${cleanName}のメダル`;
+            document.getElementById('popup-badge-desc').textContent = `${specialty.desc}！市町村メダルを図鑑に追加しました。`;
             
             const container = document.getElementById('popup-badge-container');
-            container.innerHTML = createCityNameMedalSvg(cityName, 80, 80);
+            container.innerHTML = createCityNameMedalSvg(cleanName, 80, 80);
 
             document.getElementById('badge-popup-modal').classList.remove('hidden');
         }
@@ -873,8 +918,9 @@
                     author: currentUserName 
                 };
 
+                const cleanCity = getCleanCityName(pref, city);
                 const existingCities = getUniqueCities();
-                const isNewCity = !existingCities.some(item => item.pref === pref && item.city === city);
+                const isNewCity = !existingCities.some(item => item.pref === pref && item.city === cleanCity);
 
                 const shopsRef = getDatabaseRef().ref('shops');
                 if (id) {
