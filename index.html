@@ -874,8 +874,11 @@
                             <p class="text-xs text-dark-muted truncate"><i class="fa-solid fa-map-pin text-orange-400 mr-1"></i>${escapeHtml(shortArea)}</p>
                         </div>
                     </div>
-                    <div class="p-3 sm:p-4 pt-0 border-t border-dark-border/40 mt-1 flex justify-between items-center bg-dark-card/50 gap-1">
-                        <span class="text-[10px] sm:text-[11px] text-dark-muted truncate">${escapeHtml(shop.author || '不明')}</span>
+                    <div class="p-3 sm:p-4 pt-0 border-t border-dark-border/40 mt-1 flex justify-end items-center bg-dark-card/50 gap-2">
+                        <button onclick="panToShop('${shop.id}')" class="px-2.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold bg-dark-input hover:bg-dark-border text-white border border-dark-border transition flex items-center space-x-1 shrink-0">
+                            <i class="fa-solid fa-map-pin text-orange-400"></i>
+                            <span>地図で見る</span>
+                        </button>
                         <button onclick="toggleItayo('${shop.id}')" class="px-2.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition flex items-center space-x-1 shrink-0 ${hasItayo ? 'bg-orange-500 text-white shadow-sm' : 'bg-dark-input hover:bg-dark-border text-dark-muted border border-dark-border'}">
                             <i class="fa-solid fa-check-circle"></i>
                             <span>イッタヨ！ (${itayoCount})</span>
@@ -953,6 +956,16 @@
 
         function closeDetailModal() {
             document.getElementById('detail-modal').classList.add('hidden');
+        }
+
+        function panToShop(id) {
+            const shop = allShops.find(s => s.id === id);
+            if (shop && shop.lat && shop.lng && map) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setTimeout(() => {
+                    map.flyTo([shop.lat, shop.lng], 16, { duration: 1.2 });
+                }, 300);
+            }
         }
 
         function panToShopFromDetail() {
@@ -1237,12 +1250,10 @@
             const subEl = document.getElementById('roulette-sub');
             const btnEl = document.getElementById('roulette-btn');
 
-            // フィルター条件に合致するスポットを抽出
             const filteredShops = allShops.filter(shop => {
                 const matchGenre = (selectedGenre === 'all' || shop.genre === selectedGenre);
                 const matchPref = (selectedPref === 'all' || shop.pref === selectedPref);
                 
-                // 市町村・フリーワードの判定
                 const matchKeyword = !keyword || 
                     (shop.name && shop.name.toLowerCase().includes(keyword)) ||
                     (shop.city && shop.city.toLowerCase().includes(keyword)) ||
