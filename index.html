@@ -199,29 +199,41 @@
         </div>
     </nav>
 
-    <!-- バッチ図鑑モーダル -->
+    <!-- バッチ図鑑モーダル（名産品メダル＆コンプリート機能対応） -->
     <div id="badge-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-dark-card w-full max-w-2xl rounded-2xl border border-dark-border shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-4 border-b border-dark-border flex justify-between items-center bg-dark-input">
                 <div class="flex items-center space-x-2">
                     <i class="fa-solid fa-medal text-amber-400 text-lg"></i>
-                    <h3 class="font-bold text-base text-white">市町村章バッチ図鑑</h3>
+                    <h3 class="font-bold text-base text-white">名産品メダル図鑑</h3>
                 </div>
                 <button onclick="closeBadgeModal()" class="text-dark-muted hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-6 overflow-y-auto space-y-6 flex-1">
-                <div class="bg-dark-input p-4 rounded-xl border border-dark-border flex justify-between items-center">
-                    <div>
-                        <p class="text-xs text-dark-muted">獲得した市町村バッチ</p>
-                        <p class="text-2xl font-black text-amber-400"><span id="badge-count">0</span> <span class="text-xs font-normal text-white">市区町村</span></p>
+                <!-- 進捗・コンプリート表示エリア -->
+                <div class="bg-dark-input p-4 rounded-xl border border-dark-border space-y-3">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-xs text-dark-muted">獲得した市町村メダル</p>
+                            <p class="text-2xl font-black text-amber-400"><span id="badge-count">0</span> <span class="text-xs font-normal text-white">/ 1,741 市区町村</span></p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-dark-muted">コンプリートまで</p>
+                            <p class="text-sm font-bold text-orange-400" id="complete-remaining-text">あと1,741個</p>
+                        </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-xs text-dark-muted">ステータス</p>
-                        <p class="text-sm font-bold text-orange-400" id="badge-status-text">旅のビギナー</p>
+                    <!-- プログレスバー -->
+                    <div class="w-full bg-dark-border rounded-full h-2.5 overflow-hidden">
+                        <div id="complete-progress-bar" class="bg-gradient-to-r from-orange-500 to-amber-400 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-dark-muted pt-1">
+                        <span>称号: <strong id="badge-status-text" class="text-amber-400">旅のビギナー</strong></span>
+                        <span id="complete-percentage">0.0% 達成</span>
                     </div>
                 </div>
+
                 <div>
-                    <h4 class="text-xs font-bold text-dark-muted uppercase tracking-wider mb-3">獲得済みバッチ一覧</h4>
+                    <h4 class="text-xs font-bold text-dark-muted uppercase tracking-wider mb-3">名産品メダル一覧</h4>
                     <div id="badge-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
                 </div>
             </div>
@@ -235,12 +247,12 @@
     <div id="badge-popup-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-dark-card w-full max-w-sm rounded-2xl border-2 border-amber-500 shadow-2xl p-6 text-center space-y-4 badge-anim">
             <div class="w-20 h-20 mx-auto bg-gradient-to-tr from-amber-500 to-orange-400 rounded-full flex items-center justify-center shadow-xl border-4 border-amber-200">
-                <i class="fa-solid fa-award text-4xl text-white"></i>
+                <i id="popup-badge-icon" class="fa-solid fa-award text-3xl text-white"></i>
             </div>
             <div class="space-y-1">
-                <span class="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-bold">新着バッチ獲得！</span>
-                <h3 id="popup-badge-title" class="text-xl font-black text-white pt-2">〇〇市章バッチ</h3>
-                <p class="text-xs text-dark-muted">新しい市町村を開拓しました！バッチ図鑑に追加されました。</p>
+                <span class="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-bold">新着名産品メダル獲得！</span>
+                <h3 id="popup-badge-title" class="text-xl font-black text-white pt-2">〇〇メダル</h3>
+                <p id="popup-badge-desc" class="text-xs text-dark-muted">新しい名産品メダルを手に入れました！</p>
             </div>
             <button onclick="closeBadgePopup()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-lg">やったぜ！</button>
         </div>
@@ -374,6 +386,44 @@
         var markersLayer = L.layerGroup();
         var justAddedShopId = null; 
 
+        // 市町村ごとの名産品定義マップ（有名都市や代表例）
+        const specialtyDatabase = {
+            "札幌市": { name: "味噌ラーメン", icon: "fa-bowl-food", desc: "北海道の味覚とコク深い味噌" },
+            "函館市": { name: "海鮮どんぶり", icon: "fa-fish", desc: "新鮮な海の幸が詰まった贅沢丼" },
+            "仙台市": { name: "牛タン", icon: "fa-bacon", desc: "香ばしく焼き上げたジューシーな名物" },
+            "東京都": { name: "江戸前寿司", icon: "fa-fish-fins", desc: "職人技が光る伝統の握り" },
+            "横浜市": { name: "中華まん", icon: "fa-cookie-bite", desc: "中華街の熱々とろーり名物" },
+            "名古屋市": { name: "しゃちほこ・味噌カツ", icon: "fa-utensils", desc: "甘辛い濃厚味噌の名古屋メシ" },
+            "京都市": { name: "宇治抹茶スイーツ", icon: "fa-mug-saucer", desc: "芳醇な香りの和風スイーツ" },
+            "大阪市": { name: "たこ焼き", icon: "fa-circle", desc: "外はカリッと中はトロリ" },
+            "神戸市": { name: "神戸ビーフ", icon: "fa-drumstick-bite", desc: "きめ細やかな極上霜降り肉" },
+            "広島市": { name: "広島風お好み焼き", icon: "fa-pizza-slice", desc: "たっぷりキャベツと麺の絶妙ハーモニー" },
+            "福岡市": { name: "博多明太子", icon: "fa-fish-fins", desc: "ピリッとした辛味と旨味が凝縮" },
+            "那覇市": { name: "沖縄そば", icon: "fa-bowl-rice", desc: "じっくり煮込んだ豚骨出汁の麺" }
+        };
+
+        // 市町村名から動的に名産品メダル情報を取得する関数
+        function getSpecialtyMedal(cityName) {
+            if (specialtyDatabase[cityName]) {
+                return specialtyDatabase[cityName];
+            }
+            // マップにない市町村の場合、文字のハッシュ等からランダム風に名産品モチーフを自動割り当て
+            const defaultMotifs = [
+                { name: "特産フルーツ", icon: "fa-apple-whole", desc: "太陽の恵みを受けた瑞々しい果物" },
+                { name: "郷土の地酒", icon: "fa-wine-bottle", desc: "清らかな水と米で仕込んだ逸品" },
+                { name: "特選和牛", icon: "fa-drumstick-bite", desc: "豊かな自然で育った極上の肉料理" },
+                { name: "新鮮な海の幸", icon: "fa-fish", desc: "荒波にもまれた極上の魚介" },
+                { name: "名物どんぶり", icon: "fa-bowl-food", desc: "地元食材をふんだんに使った自慢の丼" },
+                { name: "特製お米", icon: "fa-seedling", desc: "粘りと甘みが際立つ極上米" }
+            ];
+            let hash = 0;
+            for (let i = 0; i < cityName.length; i++) {
+                hash = cityName.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const index = Math.abs(hash) % defaultMotifs.length;
+            return defaultMotifs[index];
+        }
+
         const prefCoordinates = {
             "北海道": [43.064, 141.3469], "青森県": [40.8244, 140.74], "岩手県": [39.7036, 141.1527],
             "宮城県": [38.2688, 140.8721], "秋田県": [39.7186, 140.1024], "山形県": [38.2404, 140.3636],
@@ -399,14 +449,13 @@
             loadShops();
         });
 
-        // STARTボタンを押した時にオープニングを非表示にする関数
         function closeSplashScreen() {
             const splash = document.getElementById('splash-screen');
             if (splash) {
                 splash.style.opacity = '0';
                 setTimeout(() => {
                     splash.style.display = 'none';
-                }, 700); // CSSの transition-opacity duration-700 と合わせる
+                }, 700);
             }
         }
 
@@ -624,31 +673,42 @@
 
         function openBadgeModal() {
             const cities = getUniqueCities();
-            document.getElementById('badge-count').textContent = cities.length;
+            const totalMunicipalities = 1741; // 日本の総市町村・特別区数
+            const acquiredCount = cities.length;
+            const remainingCount = Math.max(0, totalMunicipalities - acquiredCount);
+            const percentage = ((acquiredCount / totalMunicipalities) * 100).toFixed(1);
+
+            document.getElementById('badge-count').textContent = acquiredCount;
+            document.getElementById('complete-remaining-text').textContent = `あと ${remainingCount.toLocaleString()} 個`;
+            document.getElementById('complete-percentage').textContent = `${percentage}% 達成`;
+            document.getElementById('complete-progress-bar').style.width = `${Math.min(100, percentage)}%`;
             
             const statusEl = document.getElementById('badge-status-text');
-            if (cities.length >= 10) statusEl.textContent = 'グルメマスター';
-            else if (cities.length >= 5) statusEl.textContent = '県内ハンター';
-            else if (cities.length >= 1) statusEl.textContent = '街の開拓者';
+            if (acquiredCount >= 100) statusEl.textContent = '日本全国グルメマスター';
+            else if (acquiredCount >= 50) statusEl.textContent = '地方開拓の神';
+            else if (acquiredCount >= 10) statusEl.textContent = '県内ハンター';
+            else if (acquiredCount >= 1) statusEl.textContent = '街の開拓者';
             else statusEl.textContent = '旅のビギナー';
 
             const listContainer = document.getElementById('badge-list');
             listContainer.innerHTML = '';
 
             if (cities.length === 0) {
-                listContainer.innerHTML = '<div class="col-span-full text-center py-8 text-dark-muted text-xs">まだバッチを獲得していません。お店を登録してバッチを集めよう！</div>';
+                listContainer.innerHTML = '<div class="col-span-full text-center py-8 text-dark-muted text-xs">まだ名産品メダルを獲得していません。お店を登録してコンプリートを目指そう！</div>';
             } else {
                 cities.forEach(item => {
+                    const specialty = getSpecialtyMedal(item.city);
                     const badgeCard = document.createElement('div');
-                    badgeCard.className = "bg-dark-input border border-amber-500/30 rounded-xl p-3 flex flex-col items-center text-center space-y-2 shadow-md relative overflow-hidden";
+                    badgeCard.className = "bg-dark-input border border-amber-500/40 rounded-xl p-3 flex flex-col items-center text-center space-y-2 shadow-md relative overflow-hidden group hover:border-amber-400 transition";
                     badgeCard.innerHTML = `
-                        <div class="absolute top-1 right-1 text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">徽章</div>
-                        <div class="w-12 h-12 bg-gradient-to-tr from-amber-600 to-orange-500 rounded-full flex items-center justify-center shadow-inner border-2 border-amber-300">
-                            <i class="fa-solid fa-award text-white text-xl"></i>
+                        <div class="absolute top-1 right-1 text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">名産メダル</div>
+                        <div class="w-14 h-14 bg-gradient-to-tr from-amber-600 via-yellow-500 to-orange-500 rounded-full flex items-center justify-center shadow-lg border-2 border-amber-200 mt-1 transform group-hover:scale-105 transition">
+                            <i class="fa-solid ${specialty.icon} text-white text-xl drop-shadow"></i>
                         </div>
                         <div>
-                            <p class="text-xs font-bold text-white truncate max-w-[120px]">${escapeHtml(item.city)}</p>
-                            <p class="text-[10px] text-dark-muted">${escapeHtml(item.pref)}</p>
+                            <p class="text-xs font-black text-white truncate max-w-[130px]">${escapeHtml(item.city)}</p>
+                            <p class="text-[10px] text-amber-400 font-semibold truncate">${escapeHtml(specialty.name)}</p>
+                            <p class="text-[9px] text-dark-muted truncate">${escapeHtml(item.pref)}</p>
                         </div>
                     `;
                     listContainer.appendChild(badgeCard);
@@ -659,8 +719,12 @@
         }
 
         function closeBadgeModal() { document.getElementById('badge-modal').classList.add('hidden'); }
+        
         function showBadgePopup(cityName, prefName) {
-            document.getElementById('popup-badge-title').textContent = `${prefName}${cityName}章バッチ`;
+            const specialty = getSpecialtyMedal(cityName);
+            document.getElementById('popup-badge-title').textContent = `${cityName}の${specialty.name}メダル`;
+            document.getElementById('popup-badge-desc').textContent = `${specialty.desc}！図鑑に追加されました。`;
+            document.getElementById('popup-badge-icon').className = `fa-solid ${specialty.icon} text-3xl text-white`;
             document.getElementById('badge-popup-modal').classList.remove('hidden');
         }
         function closeBadgePopup() { document.getElementById('badge-popup-modal').classList.add('hidden'); }
