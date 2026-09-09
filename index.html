@@ -25,16 +25,9 @@
             height: 100%;
             border-radius: 1.5rem;
         }
-        /* 霧（未開拓エリア）の演出用カスタムスタイル */
-        .fog-overlay {
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(2px);
-            transition: all 1s ease-in-out;
-        }
         .modal {
             transition: opacity 0.3s ease, transform 0.3s ease;
         }
-        /* メダルきらめきアニメーション */
         @keyframes shine {
             0% { background-position: -200% 0; }
             100% { background-position: 200% 0; }
@@ -61,13 +54,13 @@
             <!-- コンプリートカウンター -->
             <div class="bg-emerald-700/80 px-3 py-1.5 rounded-xl border border-emerald-500/50 text-xs sm:text-sm flex items-center gap-2 shadow-inner">
                 <i class="fa-solid fa-flag text-yellow-300"></i>
-                <span>全国制覇まで: <strong id="header-remaining" class="text-yellow-300 font-bold">1,718</strong> 市町村</span>
+                <span>全国制覇まであと: <strong id="header-remaining" class="text-yellow-300 font-bold">1,718</strong> 市町村</span>
             </div>
             <nav class="flex space-x-1 sm:space-x-2">
                 <button onclick="switchTab('map')" id="btn-tab-map" class="px-3 py-1.5 rounded-xl text-sm font-bold bg-white text-emerald-700 shadow transition flex items-center gap-1.5">
                     <i class="fa-solid fa-map"></i> マップ
                 </button>
-                <button onclick="switchTab" id="btn-tab-badges" class="px-3 py-1.5 rounded-xl text-sm font-bold bg-emerald-700 hover:bg-emerald-500 text-white transition flex items-center gap-1.5">
+                <button onclick="switchTab('badges')" id="btn-tab-badges" class="px-3 py-1.5 rounded-xl text-sm font-bold bg-emerald-700 hover:bg-emerald-500 text-white transition flex items-center gap-1.5">
                     <i class="fa-solid fa-medal"></i> 図鑑
                 </button>
                 <button onclick="switchTab('gacha')" id="btn-tab-gacha" class="px-3 py-1.5 rounded-xl text-sm font-bold bg-emerald-700 hover:bg-emerald-500 text-white transition flex items-center gap-1.5">
@@ -87,7 +80,7 @@
                     <h2 class="font-bold text-lg text-slate-800 flex items-center gap-2">
                         <i class="fa-solid fa-cloud-sun text-emerald-500"></i> エリア開拓状況
                     </h2>
-                    <p class="text-xs text-slate-500">お店を登録すると周辺1kmの霧が晴れ、名産物メダルが手に入ります！</p>
+                    <p class="text-xs text-slate-500">お店を登録すると周辺1kmが円で開拓され、名産物メダルが手に入ります！</p>
                 </div>
                 <button onclick="openAddModal()" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-5 py-2.5 rounded-2xl shadow-md transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-plus-circle"></i> お店を登録する
@@ -203,10 +196,8 @@
 
     <!-- JavaScript ロジック -->
     <script>
-        // 全国総市町村数（総務省基準：1,718市町村）
         const TOTAL_MUNICIPALITIES = 1718;
 
-        // 初期データ（サンプル：名古屋市）
         let shops = JSON.parse(localStorage.getItem('naniku_shops')) || [
             {
                 id: 1,
@@ -221,36 +212,38 @@
             }
         ];
 
-        let map, exploredCircles = [];
+        let map, exploredLayers = [];
 
-        // アプリ初期化
         document.addEventListener('DOMContentLoaded', () => {
             initMap();
             renderAll();
         });
 
-        // タブ切り替え
+        // タブ切り替え（修正済）
         function switchTab(tabName) {
             ['map', 'badges', 'gacha'].forEach(t => {
-                document.getElementById(`tab-${t}`).classList.add('hidden');
+                const el = document.getElementById(`tab-${t}`);
                 const btn = document.getElementById(`btn-tab-${t}`);
+                if (el) el.classList.add('hidden');
                 if (btn) {
                     btn.className = "px-3 py-1.5 rounded-xl text-sm font-bold bg-emerald-700 hover:bg-emerald-500 text-white transition flex items-center gap-1.5";
                 }
             });
-            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-            const activeBtn = document.getElementById(`btn-tab-${tabName}`);
-            if (activeBtn) {
-                activeBtn.className = "px-3 py-1.5 rounded-xl text-sm font-bold bg-white text-emerald-700 shadow transition flex items-center gap-1.5";
+            
+            const targetTab = document.getElementById(`tab-${tabName}`);
+            const targetBtn = document.getElementById(`btn-tab-${tabName}`);
+            if (targetTab) targetTab.classList.remove('hidden');
+            if (targetBtn) {
+                targetBtn.className = "px-3 py-1.5 rounded-xl text-sm font-bold bg-white text-emerald-700 shadow transition flex items-center gap-1.5";
             }
+
             if (tabName === 'map' && map) {
                 setTimeout(() => map.invalidateSize(), 200);
             }
         }
 
-        // マップ初期化（愛知県半田市周辺を初期中心位置に設定）
         function initMap() {
-            map = L.map('map').setView([34.8928, 136.9361], 13);
+            map = L.map('map').setView([35.1815, 136.9066], 11);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '&copy; OpenStreetMap'
@@ -258,24 +251,20 @@
             updateMapLayers();
         }
 
-        // マップの開拓サークルとピンを更新
         function updateMapLayers() {
             if (!map) return;
-            // 既存のサークルやレイヤーをクリア
-            exploredCircles.forEach(layer => map.removeLayer(layer));
-            exploredCircles = [];
+            exploredLayers.forEach(layer => map.removeLayer(layer));
+            exploredLayers = [];
 
             shops.forEach(shop => {
-                // 開拓エリア（半径1kmの円）
                 const circle = L.circle([shop.lat, shop.lng], {
                     color: '#10b981',
                     fillColor: '#34d399',
                     fillOpacity: 0.3,
                     radius: 1000
                 }).addTo(map);
-                exploredCircles.push(circle);
+                exploredLayers.push(circle);
 
-                // ピン
                 const marker = L.marker([shop.lat, shop.lng]).addTo(map);
                 marker.bindPopup(`
                     <div class="p-1">
@@ -285,11 +274,10 @@
                         <p class="text-xs text-slate-600 mt-1">${shop.memo || ''}</p>
                     </div>
                 `);
-                exploredCircles.push(marker);
+                exploredLayers.push(marker);
             });
         }
 
-        // 画面全体のレンダリング更新
         function renderAll() {
             localStorage.setItem('naniku_shops', JSON.stringify(shops));
             updateMapLayers();
@@ -298,9 +286,7 @@
             updateCounters();
         }
 
-        // カウンターおよび進捗の更新
         function updateCounters() {
-            // 重複なしの市区町村数を計算
             const uniqueCities = new Set(shops.map(s => `${s.pref}-${s.city}`)).size;
             const remaining = Math.max(0, TOTAL_MUNICIPALITIES - uniqueCities);
 
@@ -308,13 +294,12 @@
             document.getElementById('badge-count-text').innerHTML = `${uniqueCities.toLocaleString()} / ${TOTAL_MUNICIPALITIES.toLocaleString()} <span class="text-xs font-normal">市区町村</span>`;
         }
 
-        // 最近のお店リスト表示
         function renderRecentShops() {
             const container = document.getElementById('recent-shops-list');
             container.innerHTML = '';
             
             if (shops.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-400 col-span-full text-center py-4">まだお店が登録されていません。「お店を登録する」から始めましょう！</p>`;
+                container.innerHTML = `<p class="text-xs text-slate-400 col-span-full text-center py-4">まだお店が登録されていません。</p>`;
                 return;
             }
 
@@ -336,18 +321,14 @@
             });
         }
 
-        // 市町村ごとの名産物メダル図鑑の描画
         function renderBadges() {
             const grid = document.getElementById('badges-grid');
             grid.innerHTML = '';
 
-            // 市町村ごとにグループ化
             const cityMap = {};
             shops.forEach(shop => {
                 const key = `${shop.pref} ${shop.city}`;
-                if (!cityMap[key]) {
-                    cityMap[key] = shop;
-                }
+                if (!cityMap[key]) cityMap[key] = shop;
             });
 
             const uniqueCityKeys = Object.keys(cityMap);
@@ -367,7 +348,6 @@
                         <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">${shop.pref}</span>
                         <h4 class="font-extrabold text-sm text-slate-800 mt-1">${shop.city}</h4>
                     </div>
-                    <!-- 名産物メダルアイコン -->
                     <div class="my-3 relative">
                         <div class="w-16 h-16 bg-gradient-to-tr from-amber-400 via-yellow-300 to-amber-500 rounded-full flex items-center justify-center shadow-md mx-auto border-4 border-amber-100 text-white text-2xl group-hover:scale-105 transition transform">
                             <i class="fa-solid fa-medal drop-shadow"></i>
@@ -385,52 +365,38 @@
             });
         }
 
-        // ガチャを回す
         function spinGacha() {
             const resultBox = document.getElementById('gacha-result');
             if (shops.length === 0) {
-                resultBox.innerHTML = `<span class="text-xs text-red-500 font-bold">お店が登録されていません。先にお店を登録してください！</span>`;
+                resultBox.innerHTML = `<span class="text-xs text-red-500 font-bold">お店が登録されていません。</span>`;
                 return;
             }
 
-            resultBox.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl text-emerald-600"></i><span class="text-xs text-slate-500 mt-1">今日のランチを選定中...</span>`;
+            resultBox.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xl text-emerald-600"></i><span class="text-xs text-slate-500 mt-1">選定中...</span>`;
 
             setTimeout(() => {
-                const randomIndex = Math.floor(Math.random() * shops.length);
-                const picked = shops[randomIndex];
-                
+                const picked = shops[Math.floor(Math.random() * shops.length)];
                 resultBox.innerHTML = `
                     <span class="text-xs text-emerald-600 font-bold">${picked.pref} ${picked.city}</span>
                     <h4 class="text-base font-black text-slate-800 mt-0.5">${picked.name}</h4>
                     <span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold mt-1">おすすめ名産: ${picked.specialty}</span>
                 `;
-
-                // クラッカー演出
                 if (typeof confetti === 'function') {
-                    confetti({
-                        particleCount: 70,
-                        spread: 60,
-                        origin: { y: 0.6 }
-                    });
+                    confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
                 }
             }, 600);
         }
 
-        // モーダル操作
         function openAddModal() {
-            document.getElementById('shop-modal').style.display = 'flex'; // fallback
-            const modal = document.getElementById('add-modal');
-            modal.classList.remove('hidden');
-            // 現在位置に近いデフォルトのダミー座標として半田市周辺を設定
-            document.getElementById('shop-lat').value = (34.89 + (Math.random() - 0.5) * 0.05).toFixed(4);
-            document.getElementById('shop-lng').value = (136.93 + (Math.random() - 0.5) * 0.05).toFixed(4);
+            document.getElementById('add-modal').classList.remove('hidden');
+            document.getElementById('shop-lat').value = (35.1815 + (Math.random() - 0.5) * 0.05).toFixed(4);
+            document.getElementById('shop-lng').value = (136.9066 + (Math.random() - 0.5) * 0.05).toFixed(4);
         }
 
         function closeAddModal() {
             document.getElementById('add-modal').classList.add('hidden');
         }
 
-        // お店登録フォーム送信ハンドラ
         function handleShopSubmit(e) {
             e.preventDefault();
             const newShop = {
@@ -450,20 +416,12 @@
             closeAddModal();
             document.getElementById('shop-form').reset();
 
-            // 登録成功時の演出
             if (typeof confetti === 'function') {
-                confetti({
-                    particleCount: 100,
-                    spread: 70,
-                    origin: { y: 0.5 }
-                });
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.5 } });
             }
 
-            // マップタブに切り替えてフォーカス
             switchTab('map');
-            if (map) {
-                map.setView([newShop.lat, newShop.lng], 14);
-            }
+            if (map) map.setView([newShop.lat, newShop.lng], 14);
         }
     </script>
 </body>
