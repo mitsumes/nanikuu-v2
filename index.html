@@ -222,7 +222,7 @@
 
     </main>
 
-    <!-- フッターバー（デザインと大きさをそろえた修正部分） -->
+    <!-- フッターバー -->
     <nav class="fixed bottom-0 left-0 right-0 z-40 bg-dark-card/95 backdrop-blur-md border-t border-dark-border px-3 py-2.5 shadow-2xl">
         <div class="max-w-4xl mx-auto flex items-center justify-between gap-1.5">
             <button onclick="openFriendModal()" class="flex-1 bg-dark-input hover:bg-dark-border border border-blue-500/40 text-blue-400 font-medium py-2.5 px-1 rounded-xl text-[11px] transition flex flex-col items-center justify-center gap-1 h-13">
@@ -602,8 +602,8 @@
         function getDatabaseRef() { return firebase.database(); }
 
         var currentUserName = '';
-        var targetRoomUser = ''; // 覗き見している相手のユーザー名（空なら自分の部屋）
-        var currentTab = 'visited'; // 'visited' または 'want'
+        var targetRoomUser = ''; 
+        var currentTab = 'visited'; 
         var allShops = [];
         var map;
         var markersLayer = L.layerGroup();
@@ -707,8 +707,8 @@
                 document.getElementById('visiting-username').textContent = targetRoomUser;
                 document.getElementById('header-mode-badge').textContent = `${targetRoomUser}の部屋`;
                 document.getElementById('back-to-myroom-btn').classList.remove('hidden');
-                if(visitHistoryBtn) visitHistoryBtn.classList.add('hidden'); // 他人の部屋では訪問履歴ボタン非表示
-                document.getElementById('add-shop-footer-btn').classList.add('hidden'); // 訪問中は追加ボタン非表示
+                if(visitHistoryBtn) visitHistoryBtn.classList.add('hidden');
+                document.getElementById('add-shop-footer-btn').classList.add('hidden');
                 
                 if(wantTabEl) wantTabEl.style.display = 'flex';
 
@@ -870,7 +870,7 @@
             const friends = getFriendsList();
 
             if (friends.length === 0) {
-                container.innerHTML = '<p class="text-xs text-dark-muted text-center py-4">まだ友達がいません。「友達を探す」から追加してみましょう！</p>';
+                container.innerHTML = '<p class="text-xs text-dark-muted text-center py-4">まだ友達がいません。「探す」から追加してみましょう！</p>';
                 return;
             }
 
@@ -1321,6 +1321,9 @@
         function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); }
         function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); }
 
+        function openRouletteModal() { document.getElementById('roulette-modal').classList.remove('hidden'); }
+        function closeRouletteModal() { document.getElementById('roulette-modal').classList.add('hidden'); }
+
         function openAddModal() {
             document.getElementById('modal-title').textContent = 'お店を追加する';
             document.getElementById('edit-shop-id').value = '';
@@ -1355,6 +1358,40 @@
                 if (data && data.length > 0) return { lat: data[0].geometry.coordinates[1], lng: data[0].geometry.coordinates[0] };
             } catch (e) { console.error(e); }
             return prefCoordinates[pref] ? { lat: prefCoordinates[pref][0], lng: prefCoordinates[pref][1] } : null;
+        }
+
+        function resizeImage(file, maxWidth, maxHeight, quality) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > height) {
+                            if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+                        } else {
+                            if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        canvas.toBlob((blob) => { resolve(blob); }, 'image/jpeg', quality);
+                    };
+                };
+            });
+        }
+
+        function convertBlobToBase64(blob) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => { resolve(reader.result); };
+                reader.readAsDataURL(blob);
+            });
         }
 
         async function saveShop() {
@@ -1415,7 +1452,88 @@
             const activeUser = (shop.id && shop.id.startsWith('my_')) ? currentUserName : (targetRoomUser || currentUserName);
             const actualDbId = shop.id.startsWith('my_') ? shop.id.replace('my_', '') : shopId;
 
-            // ...（以降のトグル処理は元のコードのまま）
+            const itayoRef = getDatabaseRef().ref(`users/${activeUser}/shops/${actualDbId}/itayo`);
+            itayoRef.once('value', (snapshot) => {
+                const itayoData = snapshot.val() || {};
+                let userKeyToToggle = null;
+                
+                Object.keys(itayoData).forEach(k => {
+                    if (itayoData[k] === currentUserName) {
+                        userKeyToToggle = k;
+                    }
+                });
+
+                if (userKeyToToggle) {
+                    itayoRef.child(userKeyToToggle).remove();
+                } else {
+                    itayoRef.push(currentUserName);
+                }
+            });
+        }
+
+        function startRoulette() {
+            const rouletteText = document.getElementById('roulette-text');
+            const rouletteSub = document.getElementById('roulette-sub');
+            const rouletteBtn = document.getElementById('roulette-btn');
+            
+            const genreFilter = document.getElementById('roulette-genre').value;
+            const prefFilter = document.getElementById('roulette-pref').value;
+            const keywordFilter = document.getElementById('roulette-keyword').value.toLowerCase().trim();
+
+            const candidates = allShops.filter(shop => {
+                const isWant = (shop.listType || 'visited') === 'want';
+                const itayoObj = shop.itayo || {};
+                const hasItayo = Object.values(itayoObj).some(name => name === currentUserName);
+                
+                // 行きたいお店 または 自分がイッタヨしたお店を対象にする
+                const isValidList = isWant || hasItayo || (shop.author === currentUserName && (shop.listType || 'visited') === 'visited');
+                if (!isValidList && targetRoomUser) return false;
+
+                const matchGenre = (genreFilter === 'all') || (shop.genre === genreFilter);
+                const matchPref = (prefFilter === 'all') || (shop.pref === prefFilter);
+                const matchKeyword = !keywordFilter || 
+                    (shop.name && shop.name.toLowerCase().includes(keywordFilter)) ||
+                    (shop.city && shop.city.toLowerCase().includes(keywordFilter)) ||
+                    (shop.comment && shop.comment.toLowerCase().includes(keywordFilter));
+
+                return matchGenre && matchPref && matchKeyword;
+            });
+
+            if (candidates.length === 0) {
+                rouletteText.textContent = "条件に合うお店がないよ！";
+                rouletteSub.textContent = "条件を変えて試してね";
+                return;
+            }
+
+            rouletteBtn.disabled = true;
+            let count = 0;
+            const maxCount = 20;
+            const interval = setInterval(() => {
+                const randomShop = candidates[Math.floor(Math.random() * candidates.length)];
+                rouletteText.textContent = randomShop.name;
+                rouletteSub.textContent = `${randomShop.pref || ''}${randomShop.city || ''} / ${randomShop.genre || ''}`;
+                count++;
+                if (count >= maxCount) {
+                    clearInterval(interval);
+                    rouletteBtn.disabled = false;
+                    rouletteText.classList.add('winner-animation');
+                    setTimeout(() => { rouletteText.classList.remove('winner-animation'); }, 1500);
+                }
+            }, 80);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&'`"<>]/g, function(match) {
+                return {
+                    '&': '&amp;',
+                    "'": '&#x27;',
+                    '`': '&#x60;',
+                    '"': '&quot;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                }[match];
+            });
         }
     </script>
 </body>
