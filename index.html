@@ -199,6 +199,66 @@
         </div>
     </nav>
 
+    <!-- お店詳細情報ポップアップモーダル -->
+    <div id="detail-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-dark-card w-full max-w-lg rounded-2xl border border-dark-border shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-dark-border flex justify-between items-center bg-dark-input">
+                <div class="flex items-center space-x-2">
+                    <span id="detail-genre" class="text-xs bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded border border-orange-500/30">ジャンル</span>
+                    <h3 id="detail-name" class="font-bold text-base text-white truncate max-w-[260px]">店名</h3>
+                </div>
+                <button onclick="closeDetailModal()" class="text-dark-muted hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-4 flex-1">
+                <div id="detail-image-container" class="h-48 w-full overflow-hidden bg-dark-input rounded-xl hidden">
+                    <img id="detail-image" src="" class="w-full h-full object-cover">
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <p class="text-[10px] text-dark-muted uppercase font-bold tracking-wider">住所</p>
+                        <p id="detail-address" class="text-sm text-gray-200 mt-0.5"></p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 pt-2 border-t border-dark-border/60">
+                        <div>
+                            <p class="text-[10px] text-dark-muted uppercase font-bold tracking-wider">駐車場</p>
+                            <p id="detail-parking" class="text-xs text-gray-200 mt-0.5">-</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-dark-muted uppercase font-bold tracking-wider">予約</p>
+                            <p id="detail-reservation" class="text-xs text-gray-200 mt-0.5">-</p>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-dark-muted uppercase font-bold tracking-wider">決済方法</p>
+                        <div id="detail-payments" class="flex flex-wrap gap-1 mt-1"></div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-dark-muted uppercase font-bold tracking-wider">利用シーン</p>
+                        <div id="detail-scenes" class="flex flex-wrap gap-1 mt-1"></div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-dark-muted uppercase font-bold tracking-wider">おすすめメニュー・コメント</p>
+                        <p id="detail-comment" class="text-xs text-dark-muted mt-1 whitespace-pre-wrap bg-dark-input p-3 rounded-lg border border-dark-border/60"></p>
+                    </div>
+                    <div id="detail-url-wrapper" class="hidden">
+                        <p class="text-[10px] text-dark-muted uppercase font-bold tracking-wider">参考URL</p>
+                        <a id="detail-url" href="#" target="_blank" class="text-xs text-orange-400 hover:underline break-all mt-0.5 block"></a>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-dark-border bg-dark-input flex justify-between items-center">
+                <span id="detail-author" class="text-[11px] text-dark-muted">追加: -</span>
+                <div class="flex space-x-2">
+                    <button onclick="panToShopFromDetail()" class="px-4 py-2 rounded-lg text-xs bg-dark-border hover:bg-dark-muted/30 text-white font-bold transition flex items-center space-x-1">
+                        <i class="fa-solid fa-map-pin text-orange-400"></i>
+                        <span>地図で見る</span>
+                    </button>
+                    <button onclick="closeDetailModal()" class="px-5 py-2 rounded-lg text-xs bg-orange-500 hover:bg-orange-600 text-white font-bold transition">とじる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 市町村メダル図鑑モーダル -->
     <div id="badge-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-dark-card w-full max-w-2xl rounded-2xl border border-dark-border shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -251,7 +311,7 @@
                 <h3 id="popup-badge-title" class="text-xl font-black text-white pt-2">〇〇メダル</h3>
                 <p id="popup-badge-desc" class="text-xs text-dark-muted">新しい市町村メダルを手に入れました！</p>
             </div>
-            <button onclick="closeBadgePopup()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-lg">やったぜ！</button>
+            <button onclick="closeBadgePopup()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-lg text-sm transition shadow-lg">やったぜ！</button>
         </div>
     </div>
 
@@ -330,7 +390,6 @@
                     <input type="text" id="shop-building" placeholder="例: 〇〇ビル 2F" class="w-full bg-dark-input border border-dark-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
                 </div>
 
-                <!-- 追加項目：駐車場・予約・決済方法・利用シーン -->
                 <div class="grid grid-cols-2 gap-3 pt-2 border-t border-dark-border">
                     <div>
                         <label class="block text-xs font-semibold text-dark-muted mb-1">駐車場</label>
@@ -426,6 +485,7 @@
         var markersLayer = L.layerGroup();
         var territoryLayer = L.layerGroup();
         var justAddedShopId = null; 
+        var currentSelectedShopId = null; // 詳細モーダル表示用
 
         function getCleanCityName(pref, rawCity) {
             if (!rawCity) return '';
@@ -641,7 +701,7 @@
                     const isNew = (shop.id === justAddedShopId);
                     const iconClass = isNew ? 'dropped-pin' : '';
                     const pinHtml = `
-                        <div style="position: relative; width: 36px; height: 36px;">
+                        <div style="position: relative; width: 36px; height: 36px; cursor: pointer;" title="${escapeHtml(shop.name)}">
                             ${isNew ? '<div class="pin-shockwave"></div>' : ''}
                             <div class="${iconClass}" style="background-color: #f97316; width: 28px; height: 28px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(249,115,22,0.8); border: 2px solid #fff; position: absolute; top: 4px; left: 4px;">
                                 <i class="fa-solid fa-utensils" style="transform: rotate(45deg); color: #fff; font-size: 12px;"></i>
@@ -649,9 +709,16 @@
                         </div>
                     `;
                     const pinIcon = L.divIcon({ className: 'custom-pin-animated', html: pinHtml, iconSize: [36, 36], iconAnchor: [18, 36], popupAnchor: [0, -36] });
-                    const fullAddr = `${shop.pref || ''}${shop.city || ''}${shop.address || ''} ${shop.building || ''}`;
                     const marker = L.marker([shop.lat, shop.lng], { icon: pinIcon });
-                    marker.bindPopup(`<div style="color: #f3f4f6; font-weight: bold;">${escapeHtml(shop.name)}</div><div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">${escapeHtml(fullAddr)}</div>`);
+                    
+                    // 【ご要望対応】ピンアイコンをクリック（タップ）されたら、その場所を中心にズームして詳細を開く
+                    marker.on('click', () => {
+                        if (map) {
+                            map.flyTo([shop.lat, shop.lng], 16, { duration: 1.0 });
+                        }
+                        openDetailModal(shop.id);
+                    });
+
                     markersLayer.addLayer(marker);
                 }
             });
@@ -733,44 +800,31 @@
                 const card = document.createElement('div');
                 card.className = "bg-dark-card border border-dark-border rounded-xl overflow-hidden shadow-md flex flex-col justify-between";
                 
+                // 【ご要望対応】画像をタップ（クリック）するとお店の詳細が開くようにイベントとカーソルスタイルを追加
                 let imageHtml = shop.imageUrl 
-                    ? `<div class="h-32 sm:h-40 w-full overflow-hidden bg-dark-input"><img src="${shop.imageUrl}" class="w-full h-full object-cover"></div>`
-                    : `<div class="h-20 sm:h-24 w-full bg-dark-input flex items-center justify-center text-dark-muted"><i class="fa-solid fa-utensils text-xl opacity-40"></i></div>`;
+                    ? `<div onclick="openDetailModal('${shop.id}')" class="h-32 sm:h-40 w-full overflow-hidden bg-dark-input cursor-pointer group"><img src="${shop.imageUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" title="タップして詳細を見る"></div>`
+                    : `<div onclick="openDetailModal('${shop.id}')" class="h-20 sm:h-24 w-full bg-dark-input flex flex-col items-center justify-center text-dark-muted cursor-pointer hover:bg-dark-border/50 transition"><i class="fa-solid fa-utensils text-xl opacity-40 mb-1"></i><span class="text-[10px] opacity-60">詳細を見る</span></div>`;
 
-                const fullAddress = `${shop.pref || ''} ${shop.city || ''} ${shop.address || ''}${shop.building ? ' ' + shop.building : ''}`;
-
-                // タグ情報の組み立て
-                let badgeTagsHtml = '';
-                if (shop.parking) badgeTagsHtml += `<span class="text-[9px] bg-dark-input text-dark-muted px-1.5 py-0.5 rounded border border-dark-border">🅿 ${escapeHtml(shop.parking)}</span>`;
-                if (shop.reservation) badgeTagsHtml += `<span class="text-[9px] bg-dark-input text-dark-muted px-1.5 py-0.5 rounded border border-dark-border">📅 ${escapeHtml(shop.reservation)}</span>`;
-                if (shop.payments && shop.payments.length > 0) {
-                    badgeTagsHtml += `<span class="text-[9px] bg-dark-input text-dark-muted px-1.5 py-0.5 rounded border border-dark-border">💳 ${escapeHtml(shop.payments.join(', '))}</span>`;
-                }
-                if (shop.scenes && shop.scenes.length > 0) {
-                    badgeTagsHtml += `<span class="text-[9px] bg-dark-input text-dark-muted px-1.5 py-0.5 rounded border border-dark-border">👥 ${escapeHtml(shop.scenes.join(', '))}</span>`;
-                }
+                // 【ご要望対応】表示情報を最低限にスッキリ整理（店名とジャンル、エリアのみ）
+                const shortArea = `${shop.pref || ''} ${shop.city || ''}`;
 
                 card.innerHTML = `
                     <div>
                         ${imageHtml}
                         <div class="p-3 sm:p-4 space-y-2">
                             <div class="flex justify-between items-start gap-1">
-                                <div class="flex flex-wrap gap-1 items-center">
-                                    <span class="text-[10px] bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded border border-orange-500/30">${shop.genre || 'その他'}</span>
-                                    <span class="text-[10px] bg-dark-input text-dark-muted px-2 py-0.5 rounded border border-dark-border truncate max-w-[100px] sm:max-w-xs"><i class="fa-solid fa-map-pin text-orange-400 mr-1"></i>${escapeHtml(fullAddress)}</span>
-                                </div>
+                                <span class="text-[10px] bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded border border-orange-500/30">${shop.genre || 'その他'}</span>
                                 <div class="flex space-x-1 shrink-0">
-                                    <button onclick="openEditModal('${shop.id}')" class="text-dark-muted hover:text-white p-1 text-xs"><i class="fa-solid fa-pen"></i></button>
-                                    <button onclick="deleteShop('${shop.id}')" class="text-dark-muted hover:text-red-400 p-1 text-xs"><i class="fa-solid fa-trash"></i></button>
+                                    <button onclick="openEditModal('${shop.id}')" class="text-dark-muted hover:text-white p-1 text-xs" title="編集"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="deleteShop('${shop.id}')" class="text-dark-muted hover:text-red-400 p-1 text-xs" title="削除"><i class="fa-solid fa-trash"></i></button>
                                 </div>
                             </div>
-                            <h3 class="font-bold text-sm sm:text-base text-gray-100 truncate">${escapeHtml(shop.name)}</h3>
-                            ${badgeTagsHtml ? `<div class="flex flex-wrap gap-1 pt-1">${badgeTagsHtml}</div>` : ''}
-                            ${shop.comment ? `<p class="text-xs text-dark-muted line-clamp-2">${escapeHtml(shop.comment)}</p>` : ''}
+                            <h3 onclick="openDetailModal('${shop.id}')" class="font-bold text-sm sm:text-base text-gray-100 truncate cursor-pointer hover:text-orange-400 transition" title="${escapeHtml(shop.name)}">${escapeHtml(shop.name)}</h3>
+                            <p class="text-xs text-dark-muted truncate"><i class="fa-solid fa-map-pin text-orange-400 mr-1"></i>${escapeHtml(shortArea)}</p>
                         </div>
                     </div>
-                    <div class="p-3 sm:p-4 pt-0 border-t border-dark-border/40 mt-3 flex justify-between items-center bg-dark-card/50 gap-1">
-                        <span class="text-[10px] sm:text-[11px] text-dark-muted truncate">追加: ${shop.author || '不明'}</span>
+                    <div class="p-3 sm:p-4 pt-0 border-t border-dark-border/40 mt-1 flex justify-between items-center bg-dark-card/50 gap-1">
+                        <span class="text-[10px] sm:text-[11px] text-dark-muted truncate">${escapeHtml(shop.author || '不明')}</span>
                         <button onclick="toggleItayo('${shop.id}')" class="px-2.5 py-1.5 rounded-lg text-[10px] sm:text-xs font-bold transition flex items-center space-x-1 shrink-0 ${hasItayo ? 'bg-orange-500 text-white shadow-sm' : 'bg-dark-input hover:bg-dark-border text-dark-muted border border-dark-border'}">
                             <i class="fa-solid fa-check-circle"></i>
                             <span>イッタヨ！ (${itayoCount})</span>
@@ -779,6 +833,94 @@
                 `;
                 listEl.appendChild(card);
             });
+        }
+
+        // 【ご要望対応】お店の詳細情報をポップアップで開く関数
+        function openDetailModal(id) {
+            const shop = allShops.find(s => s.id === id);
+            if (!shop) return;
+            currentSelectedShopId = id;
+
+            document.getElementById('detail-name').textContent = shop.name || '';
+            document.getElementById('detail-genre').textContent = shop.genre || 'その他';
+            
+            const fullAddress = `${shop.pref || ''}${shop.city || ''}${shop.address || ''}${shop.building ? ' ' + shop.building : ''}`;
+            document.getElementById('detail-address').textContent = fullAddress;
+
+            document.getElementById('detail-parking').textContent = shop.parking || '-';
+            document.getElementById('detail-reservation').textContent = shop.reservation || '-';
+
+            // 画像の表示切替
+            const imgContainer = document.getElementById('detail-image-container');
+            const imgEl = document.getElementById('detail-image');
+            if (shop.imageUrl) {
+                imgEl.src = shop.imageUrl;
+                imgContainer.classList.remove('hidden');
+            } else {
+                imgContainer.classList.add('hidden');
+            }
+
+            // 決済方法タグ
+            const paymentsEl = document.getElementById('detail-payments');
+            paymentsEl.innerHTML = '';
+            if (shop.payments && shop.payments.length > 0) {
+                shop.payments.forEach(p => {
+                    paymentsEl.innerHTML += `<span class="text-[10px] bg-dark-input text-gray-300 px-2 py-0.5 rounded border border-dark-border">💳 ${escapeHtml(p)}</span>`;
+                });
+            } else {
+                paymentsEl.innerHTML = '<span class="text-xs text-dark-muted">情報なし</span>';
+            }
+
+            // 利用シーンタグ
+            const scenesEl = document.getElementById('detail-scenes');
+            scenesEl.innerHTML = '';
+            if (shop.scenes && shop.scenes.length > 0) {
+                shop.scenes.forEach(s => {
+                    scenesEl.innerHTML += `<span class="text-[10px] bg-dark-input text-gray-300 px-2 py-0.5 rounded border border-dark-border">👥 ${escapeHtml(s)}</span>`;
+                });
+            } else {
+                scenesEl.innerHTML = '<span class="text-xs text-dark-muted">情報なし</span>';
+            }
+
+            // コメント・メモ
+            const commentEl = document.getElementById('detail-comment');
+            if (shop.comment) {
+                commentEl.textContent = shop.comment;
+                commentEl.parentElement.classList.remove('hidden');
+            } else {
+                commentEl.parentElement.classList.add('hidden');
+            }
+
+            // 参考URL
+            const urlWrapper = document.getElementById('detail-url-wrapper');
+            const urlEl = document.getElementById('detail-url');
+            if (shop.url) {
+                urlEl.href = shop.url;
+                urlEl.textContent = shop.url;
+                urlWrapper.classList.remove('hidden');
+            } else {
+                urlWrapper.classList.add('hidden');
+            }
+
+            document.getElementById('detail-author').textContent = `追加: ${shop.author || '不明'}`;
+            document.getElementById('detail-modal').classList.remove('hidden');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detail-modal').classList.add('hidden');
+        }
+
+        // 詳細画面から地図上の位置へ移動する
+        function panToShopFromDetail() {
+            const shop = allShops.find(s => s.id === currentSelectedShopId);
+            if (shop && shop.lat && shop.lng && map) {
+                closeDetailModal();
+                // 画面を一番上にスクロールして地図を表示
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setTimeout(() => {
+                    map.flyTo([shop.lat, shop.lng], 16, { duration: 1.2 });
+                }, 300);
+            }
         }
 
         function getUniqueCities() {
@@ -875,7 +1017,6 @@
             document.getElementById('shop-parking').value = 'あり';
             document.getElementById('shop-reservation').value = '予約可能';
             
-            // チェックボックスを初期化
             document.querySelectorAll('#shop-payment-container input').forEach(cb => cb.checked = false);
             document.querySelectorAll('#shop-scene-container input').forEach(cb => cb.checked = false);
 
@@ -900,7 +1041,6 @@
             document.getElementById('shop-parking').value = shop.parking || 'あり';
             document.getElementById('shop-reservation').value = shop.reservation || '予約可能';
 
-            // チェックボックスの復元
             document.querySelectorAll('#shop-payment-container input').forEach(cb => {
                 cb.checked = shop.payments && shop.payments.includes(cb.value);
             });
