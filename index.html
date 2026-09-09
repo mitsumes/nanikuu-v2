@@ -38,14 +38,12 @@
             0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(249, 115, 22, 0.4); }
             50% { transform: scale(1.05); box-shadow: 0 0 35px rgba(249, 115, 22, 0.7); }
         }
-        /* ピン刺しドロップアニメーション */
-        @keyframes dropPin {
-            0% { transform: translateY(-120px) scale(0.3) rotate(-45deg); opacity: 0; }
-            60% { transform: translateY(10px) scale(1.1) rotate(-45deg); opacity: 1; }
-            80% { transform: translateY(-5px) scale(0.95) rotate(-45deg); }
-            100% { transform: translateY(0) scale(1) rotate(-45deg); opacity: 1; }
+        /* ピンがズームイン後に登場する演出 */
+        @keyframes popPin {
+            0% { transform: scale(0) rotate(-45Y); opacity: 0; }
+            70% { transform: scale(1.2) rotate(-45deg); opacity: 1; }
+            100% { transform: scale(1) rotate(-45deg); opacity: 1; }
         }
-        /* 衝撃波アニメーション */
         @keyframes shockwave {
             0% { transform: scale(0.2); opacity: 1; }
             100% { transform: scale(2.5); opacity: 0; }
@@ -56,7 +54,7 @@
         .anim-start-btn { animation: pulseBtn 2s ease-in-out infinite; }
         
         .dropped-pin {
-            animation: dropPin 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            animation: popPin 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
         .pin-shockwave {
@@ -66,7 +64,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: rgba(249, 115, 22, 0.6);
+            background: rgba(249, 115, 22, 0.7);
             transform: translate(-50%, -50%) scale(0.2);
             animation: shockwave 0.8s ease-out forwards;
             pointer-events: none;
@@ -101,12 +99,8 @@
             height: 100%;
         }
 
-        .leaflet-container .leaflet-overlay-pane svg {
-            pointer-events: none;
-        }
-        .leaflet-interactive {
-            pointer-events: auto;
-        }
+        .leaflet-container .leaflet-overlay-pane svg { pointer-events: none; }
+        .leaflet-interactive { pointer-events: auto; }
     </style>
 </head>
 <body class="min-h-screen pb-32">
@@ -163,7 +157,6 @@
                 <div class="relative rounded-2xl overflow-hidden border border-dark-border shadow-inner">
                     <div id="map"></div>
                     <div id="cloud-fog" class="cloud-fog-layer"></div>
-                    <!-- 雲穴あけ用SVG -->
                     <svg id="cloud-svg-overlay">
                         <defs>
                             <mask id="cloud-mask">
@@ -350,7 +343,7 @@
         var map;
         var prefLayer;
         var markersLayer = L.layerGroup();
-        var justAddedShopId = null; // アニメーション用フラグ
+        var justAddedShopId = null; 
 
         const prefCoordinates = {
             "北海道": [43.064, 141.3469], "青森県": [40.8244, 140.74], "岩手県": [39.7036, 141.1527],
@@ -383,13 +376,13 @@
                 map = L.map('map', { 
                     zoomControl: true,
                     minZoom: 5,
-                    maxZoom: 18
+                    maxZoom: 19
                 }).setView([36.2048, 138.2529], 5);
                 
-                // 【画質改善】より高精細にくっきり見える国土地理院の空中写真（ort）タイルに変更
-                L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/ort/{z}/{x}/{y}.jpg', {
-                    maxZoom: 18,
-                    attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>国土地理院</a>"
+                // 【リアルさ重視】国土地理院の最高画質オルソ画像（シームレスに拡大できる高精細レイヤー）に設定
+                L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg', {
+                    maxZoom: 19,
+                    attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>国土地理院（全国最新写真）</a>"
                 }).addTo(map);
 
                 if (typeof L.GeoJSON.AJAX !== 'undefined') {
@@ -463,13 +456,19 @@
                 renderMarkers();
                 updateCloudHoles();
 
-                // 新規投稿・編集された場合のワクワク演出トリガー
+                // 【演出改善】日本全体から目的地へ徐々にスーッとズームアップし、最後にピンが出現する演出
                 if (justAddedShopId) {
                     const targetShop = allShops.find(s => s.id === justAddedShopId);
                     if (targetShop && targetShop.lat && targetShop.lng && map) {
-                        map.flyTo([targetShop.lat, targetShop.lng], 15, {
-                            duration: 1.5
-                        });
+                        // 一旦日本全体に近い位置からスタートするか、現在地からフライ
+                        map.setView([36.2048, 138.2529], 5, { animate: false });
+                        
+                        setTimeout(() => {
+                            map.flyTo([targetShop.lat, targetShop.lng], 16, {
+                                duration: 2.2, // 2.2秒かけてダイナミックにズームイン
+                                easeLinearity: 0.25
+                            });
+                        }, 300);
                     }
                     justAddedShopId = null;
                 }
@@ -481,7 +480,6 @@
             markersLayer.clearLayers();
             allShops.forEach(shop => {
                 if (shop.lat && shop.lng) {
-                    // 新規追加されたスポットにはドロップアニメーションと衝撃波をつける
                     const isNew = (shop.id === justAddedShopId);
                     const iconClass = isNew ? 'dropped-pin' : '';
                     
@@ -510,7 +508,6 @@
             });
         }
 
-        // 雲をショップから正確に「半径1kmの範囲」でくり抜く関数（地図の拡大縮小に完全連動）
         function updateCloudHoles() {
             const holesGroup = document.getElementById('cloud-holes');
             if (!holesGroup || !map) return;
@@ -521,18 +518,14 @@
                 if (shop.lat && shop.lng) {
                     validCount++;
                     const centerPt = map.latLngToContainerPoint([shop.lat, shop.lng]);
-                    
-                    // 緯度1度 ≒ 111,320m なので、1000m（1km）北の緯度オフセットを計算
                     const latOffset = 1000 / 111320;
                     const northPt = map.latLngToContainerPoint([shop.lat + latOffset, shop.lng]);
-                    
-                    // ピクセル単位での正確な半径1kmの長さを算出
                     const radius = Math.sqrt(Math.pow(centerPt.x - northPt.x, 2) + Math.pow(centerPt.y - northPt.y, 2));
 
                     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                     circle.setAttribute('cx', centerPt.x);
                     circle.setAttribute('cy', centerPt.y);
-                    circle.setAttribute('r', Math.max(10, radius)); // 最小値の制限
+                    circle.setAttribute('r', Math.max(10, radius));
                     circle.setAttribute('fill', 'black');
                     holesGroup.appendChild(circle);
                 }
@@ -655,7 +648,6 @@
         }
         function closeModal() { document.getElementById('shop-modal').classList.add('hidden'); }
 
-        // 国土地理院APIによる正確な座標取得
         async function getLatLngFromAddress(pref, city, address) {
             const queries = [
                 `${pref}${city}${address}`,
@@ -669,7 +661,7 @@
                     const response = await fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(q)}`);
                     const data = await response.json();
                     if (data && data.length > 0) {
-                        const coordinates = data[0].geometry.coordinates; // [lng, lat]
+                        const coordinates = data[0].geometry.coordinates;
                         return { lat: coordinates[1], lng: coordinates[0] };
                     }
                 } catch (e) {
