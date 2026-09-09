@@ -38,7 +38,6 @@
             0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(249, 115, 22, 0.4); }
             50% { transform: scale(1.05); box-shadow: 0 0 35px rgba(249, 115, 22, 0.7); }
         }
-        /* ピンがズームイン後に登場する演出 */
         @keyframes popPin {
             0% { transform: scale(0) rotate(-45deg); opacity: 0; }
             70% { transform: scale(1.2) rotate(-45deg); opacity: 1; }
@@ -48,14 +47,17 @@
             0% { transform: scale(0.2); opacity: 1; }
             100% { transform: scale(2.5); opacity: 0; }
         }
+        @keyframes badgePop {
+            0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+            70% { transform: scale(1.1) rotate(5deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
 
         .anim-title { animation: pulseGlow 2s ease-in-out infinite; }
         .anim-icon { animation: floatIcon 1.5s ease-in-out infinite; }
         .anim-start-btn { animation: pulseBtn 2s ease-in-out infinite; }
-        
-        .dropped-pin {
-            animation: popPin 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
+        .dropped-pin { animation: popPin 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .badge-anim { animation: badgePop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 
         .pin-shockwave {
             position: absolute;
@@ -115,7 +117,7 @@
                 <h1 class="text-3xl font-black tracking-widest text-white anim-title">なにクウ？</h1>
                 <p class="text-xs text-orange-400 font-bold tracking-wider uppercase border-t border-b border-orange-500/30 py-1 inline-block px-4">- 日本全国 都道府県開拓手帳 -</p>
             </div>
-            <p class="text-xs text-dark-muted">お店を登録して雲を晴らそう！</p>
+            <p class="text-xs text-dark-muted">お店を登録して雲を晴らし、バッチを集めよう！</p>
             <div class="pt-6">
                 <button onclick="closeSplashScreen()" class="anim-start-btn group bg-gradient-to-b from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white w-28 h-28 rounded-full shadow-2xl flex flex-col items-center justify-center border-4 border-amber-300/60 transition transform active:scale-95 cursor-pointer">
                     <i class="fa-solid fa-bowl-food text-3xl mb-1 text-amber-100"></i>
@@ -189,7 +191,6 @@
                 <p class="text-xs text-dark-muted mt-2">データを読み込んでいます...</p>
             </div>
 
-            <!-- 修正: 常に横2列・縦無制限 (grid-cols-2) に設定 -->
             <div id="shop-list" class="grid grid-cols-2 gap-3 sm:gap-4"></div>
 
             <div id="no-data" class="hidden text-center py-12 bg-dark-card rounded-xl border border-dark-border">
@@ -200,22 +201,75 @@
 
     </main>
 
-    <!-- フッターバー -->
+    <!-- フッターバー (ボタン4つに拡張) -->
     <nav class="fixed bottom-0 left-0 right-0 z-40 bg-dark-card/95 backdrop-blur-md border-t border-dark-border px-4 py-3 shadow-2xl">
         <div class="max-w-4xl mx-auto flex items-center justify-around gap-2">
             <button onclick="openSearchModal()" class="flex-1 bg-dark-input hover:bg-dark-border border border-dark-border text-dark-text font-medium py-3 px-2 rounded-xl text-xs transition flex flex-col sm:flex-row items-center justify-center gap-1">
                 <i class="fa-solid fa-search text-orange-400 text-base"></i>
-                <span>検索・絞り込み</span>
+                <span>検索</span>
             </button>
-            <button onclick="openRouletteModal()" class="w-16 bg-dark-input hover:bg-dark-border border border-orange-500/40 text-orange-400 font-medium py-3 px-2 rounded-xl transition flex items-center justify-center" title="ガチャ">
-                <i class="fa-solid fa-dice text-2xl animate-bounce"></i>
+            <button onclick="openBadgeModal()" class="flex-1 bg-dark-input hover:bg-dark-border border border-amber-500/40 text-amber-400 font-medium py-3 px-2 rounded-xl text-xs transition flex flex-col sm:flex-row items-center justify-center gap-1">
+                <i class="fa-solid fa-medal text-amber-400 text-base"></i>
+                <span>バッチ図鑑</span>
+            </button>
+            <button onclick="openRouletteModal()" class="w-14 bg-dark-input hover:bg-dark-border border border-orange-500/40 text-orange-400 font-medium py-3 px-2 rounded-xl transition flex items-center justify-center" title="ガチャ">
+                <i class="fa-solid fa-dice text-xl animate-bounce"></i>
             </button>
             <button onclick="openAddModal()" class="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold py-3 px-2 rounded-xl text-xs transition shadow-lg flex flex-col sm:flex-row items-center justify-center gap-1">
                 <i class="fa-solid fa-plus-circle text-base"></i>
-                <span>お店を追加</span>
+                <span>追加</span>
             </button>
         </div>
     </nav>
+
+    <!-- バッチ図鑑モーダル -->
+    <div id="badge-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-dark-card w-full max-w-2xl rounded-2xl border border-dark-border shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-dark-border flex justify-between items-center bg-dark-input">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-medal text-amber-400 text-lg"></i>
+                    <h3 class="font-bold text-base text-white">市町村章バッチ図鑑</h3>
+                </div>
+                <button onclick="closeBadgeModal()" class="text-dark-muted hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-6 flex-1">
+                <div class="bg-dark-input p-4 rounded-xl border border-dark-border flex justify-between items-center">
+                    <div>
+                        <p class="text-xs text-dark-muted">獲得した市町村バッチ</p>
+                        <p class="text-2xl font-black text-amber-400"><span id="badge-count">0</span> <span class="text-xs font-normal text-white">市区町村</span></p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-dark-muted">ステータス</p>
+                        <p class="text-sm font-bold text-orange-400" id="badge-status-text">旅のビギナー</p>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-dark-muted uppercase tracking-wider mb-3">獲得済みバッチ一覧</h4>
+                    <div id="badge-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        <!-- 動的に生成 -->
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-dark-border bg-dark-input flex justify-end">
+                <button onclick="closeBadgeModal()" class="px-6 py-2 rounded-lg text-sm bg-orange-500 hover:bg-orange-600 text-white font-bold transition">とじる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- バッチ獲得ポップアップ演出用モーダル -->
+    <div id="badge-popup-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-dark-card w-full max-w-sm rounded-2xl border-2 border-amber-500 shadow-2xl p-6 text-center space-y-4 badge-anim">
+            <div class="w-20 h-20 mx-auto bg-gradient-to-tr from-amber-500 to-orange-400 rounded-full flex items-center justify-center shadow-xl border-4 border-amber-200">
+                <i class="fa-solid fa-award text-4xl text-white"></i>
+            </div>
+            <div class="space-y-1">
+                <span class="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-bold">新着バッチ獲得！</span>
+                <h3 id="popup-badge-title" class="text-xl font-black text-white pt-2">〇〇市章バッチ</h3>
+                <p class="text-xs text-dark-muted">新しい市町村を開拓しました！バッチ図鑑に追加されました。</p>
+            </div>
+            <button onclick="closeBadgePopup()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-lg">やったぜ！</button>
+        </div>
+    </div>
 
     <!-- 検索モーダル -->
     <div id="search-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
@@ -380,7 +434,6 @@
                     maxZoom: 19
                 }).setView([36.2048, 138.2529], 5);
                 
-                // 【変更】国土地理院の「標準地図」レイヤーに変更（リアルな色分けや地形・標高が分かりやすい地図）
                 L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
                     maxZoom: 19,
                     attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>国土地理院（標準地図）</a>"
@@ -613,6 +666,73 @@
             });
         }
 
+        // バッチ図鑑関連のロジック
+        function getUniqueCities() {
+            const citiesMap = {};
+            allShops.forEach(shop => {
+                if (shop.city && shop.pref) {
+                    const key = `${shop.pref}_${shop.city}`;
+                    if (!citiesMap[key]) {
+                        citiesMap[key] = {
+                            pref: shop.pref,
+                            city: shop.city,
+                            firstAdd: shop.createdAt || Date.now()
+                        };
+                    }
+                }
+            });
+            return Object.values(citiesMap);
+        }
+
+        function openBadgeModal() {
+            const cities = getUniqueCities();
+            document.getElementById('badge-count').textContent = cities.length;
+            
+            const statusEl = document.getElementById('badge-status-text');
+            if (cities.length >= 10) statusEl.textContent = 'グルメマスター';
+            else if (cities.length >= 5) statusEl.textContent = '県内ハンター';
+            else if (cities.length >= 1) statusEl.textContent = '街の開拓者';
+            else statusEl.textContent = '旅のビギナー';
+
+            const listContainer = document.getElementById('badge-list');
+            listContainer.innerHTML = '';
+
+            if (cities.length === 0) {
+                listContainer.innerHTML = '<div class="col-span-full text-center py-8 text-dark-muted text-xs">まだバッチを獲得していません。お店を登録してバッチを集めよう！</div>';
+            } else {
+                cities.forEach(item => {
+                    const badgeCard = document.createElement('div');
+                    badgeCard.className = "bg-dark-input border border-amber-500/30 rounded-xl p-3 flex flex-col items-center text-center space-y-2 shadow-md relative overflow-hidden";
+                    badgeCard.innerHTML = `
+                        <div class="absolute top-1 right-1 text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">徽章</div>
+                        <div class="w-12 h-12 bg-gradient-to-tr from-amber-600 to-orange-500 rounded-full flex items-center justify-center shadow-inner border-2 border-amber-300">
+                            <i class="fa-solid fa-award text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-white truncate max-w-[120px]">${escapeHtml(item.city)}</p>
+                            <p class="text-[10px] text-dark-muted">${escapeHtml(item.pref)}</p>
+                        </div>
+                    `;
+                    listContainer.appendChild(badgeCard);
+                });
+            }
+
+            document.getElementById('badge-modal').classList.remove('hidden');
+        }
+
+        function closeBadgeModal() {
+            document.getElementById('badge-modal').classList.add('hidden');
+        }
+
+        function showBadgePopup(cityName, prefName) {
+            document.getElementById('popup-badge-title').textContent = `${prefName}${cityName}章バッチ`;
+            document.getElementById('badge-popup-modal').classList.remove('hidden');
+        }
+
+        function closeBadgePopup() {
+            document.getElementById('badge-popup-modal').classList.add('hidden');
+        }
+
         function openSearchModal() { document.getElementById('search-modal').classList.remove('hidden'); }
         function closeSearchModal() { document.getElementById('search-modal').classList.add('hidden'); }
         function openAddModal() {
@@ -718,6 +838,10 @@
                     author: currentUserName 
                 };
 
+                // 登録前に、この市区町村のバッチを既に持っているか確認
+                const existingCities = getUniqueCities();
+                const isNewCity = !existingCities.some(item => item.pref === pref && item.city === city);
+
                 const shopsRef = getDatabaseRef().ref('shops');
                 if (id) {
                     justAddedShopId = id;
@@ -729,6 +853,14 @@
                     await newRef.set(shopData);
                 }
                 closeModal();
+
+                // 新規市区町村の場合はお祝いバッチポップアップを表示
+                if (!id && isNewCity) {
+                    setTimeout(() => {
+                        showBadgePopup(city, pref);
+                    }, 800);
+                }
+
             } catch (e) {
                 alert('保存に失敗しました: ' + (e.message || e));
             } finally {
