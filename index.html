@@ -653,22 +653,49 @@
             return { name: "ご当地名物", desc: "地元で愛される自慢の味覚" };
         }
 
-        function createCityNameMedalSvg(cleanCityName, width = 60, height = 60) {
+        // 豪華なゴールドメダルデザインにアップグレードされたSVG生成関数
+        function createCityNameMedalSvg(cleanCityName, width = 64, height = 64) {
             const specialty = getSpecialtyMedal(cleanCityName);
-            let fontSize = cleanCityName.length >= 7 ? 11 : (cleanCityName.length >= 5 ? 13 : 16);
+            let fontSize = cleanCityName.length >= 7 ? 11 : (cleanCityName.length >= 5 ? 13 : 15);
             return `
-                <svg width="${width}" height="${height}" viewBox="0 0 100 100" class="drop-shadow-md">
-                    <circle cx="50" cy="50" r="46" fill="url(#medalGradient)" stroke="#fbbf24" stroke-width="4" />
-                    <circle cx="50" cy="50" r="39" fill="#1e1e1e" opacity="0.85" />
-                    <text x="50" y="44" fill="#ffffff" font-size="${fontSize}" font-weight="900" text-anchor="middle" dominant-baseline="central">${escapeHtml(cleanCityName)}</text>
-                    <text x="50" y="68" fill="#fb923c" font-size="9" font-weight="bold" text-anchor="middle" dominant-baseline="central">${escapeHtml(specialty.name)}</text>
+                <svg width="${width}" height="${height}" viewBox="0 0 120 120" class="drop-shadow-lg">
                     <defs>
-                        <linearGradient id="medalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#f59e0b" />
-                            <stop offset="50%" stop-color="#eab308" />
-                            <stop offset="100%" stop-color="#d97706" />
+                        <!-- 豪華なゴールドグラデーション -->
+                        <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fff176" />
+                            <stop offset="30%" stop-color="#fbc02d" />
+                            <stop offset="70%" stop-color="#ff8f00" />
+                            <stop offset="100%" stop-color="#ff6f00" />
                         </linearGradient>
+                        <linearGradient id="innerGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#2c2c2c" />
+                            <stop offset="100%" stop-color="#121212" />
+                        </linearGradient>
+                        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur stdDeviation="3" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                        </filter>
                     </defs>
+
+                    <!-- 外側の立体フリル・星の装飾 -->
+                    <circle cx="60" cy="60" r="56" fill="url(#goldGradient)" stroke="#ffe082" stroke-width="2" filter="url(#glow)" />
+                    <circle cx="60" cy="60" r="52" fill="#b7791f" />
+                    <circle cx="60" cy="60" r="49" fill="url(#goldGradient)" />
+
+                    <!-- 上部のリボン飾り・星 -->
+                    <polygon points="60,3 64,13 74,13 66,19 69,29 60,23 51,29 54,19 46,13 56,13" fill="#ffe082" stroke="#d97706" stroke-width="1" />
+
+                    <!-- 黒ベースの内側円盤 -->
+                    <circle cx="60" cy="60" r="40" fill="url(#innerGradient)" stroke="#ffd700" stroke-width="2.5" />
+
+                    <!-- 市町村名 -->
+                    <text x="60" y="52" fill="#ffffff" font-size="${fontSize}" font-weight="900" text-anchor="middle" dominant-baseline="central" style="letter-spacing: 0.5px; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">${escapeHtml(cleanCityName)}</text>
+                    
+                    <!-- 区切りライン -->
+                    <line x1="36" y1="64" x2="84" y2="64" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="2,2" />
+
+                    <!-- ご当地名物 -->
+                    <text x="60" y="78" fill="#ffb74d" font-size="10" font-weight="bold" text-anchor="middle" dominant-baseline="central" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.9));">${escapeHtml(specialty.name)}</text>
                 </svg>
             `;
         }
@@ -1306,7 +1333,7 @@
             const listContainer = document.getElementById('badge-list');
             listContainer.innerHTML = cities.length === 0 ? '<div class="col-span-full text-center py-8 text-dark-muted text-xs">まだメダルを獲得していません</div>' : cities.map(item => `
                 <div class="bg-dark-input border border-amber-500/40 rounded-xl p-3 flex flex-col items-center text-center space-y-2 shadow-md">
-                    ${createCityNameMedalSvg(item.city, 64, 64)}
+                    ${createCityNameMedalSvg(item.city, 72, 72)}
                     <div>
                         <p class="text-xs font-black text-white truncate max-w-[130px]">${escapeHtml(item.city)}</p>
                         <p class="text-[9px] text-dark-muted truncate">${escapeHtml(item.pref)}</p>
@@ -1485,7 +1512,6 @@
                 const itayoObj = shop.itayo || {};
                 const hasItayo = Object.values(itayoObj).some(name => name === currentUserName);
                 
-                // 行きたいお店 または 自分がイッタヨしたお店を対象にする
                 const isValidList = isWant || hasItayo || (shop.author === currentUserName && (shop.listType || 'visited') === 'visited');
                 if (!isValidList && targetRoomUser) return false;
 
