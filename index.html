@@ -153,23 +153,29 @@
     <!-- メインコンテンツ -->
     <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
 
-        <!-- 他人の部屋を訪問中の案内バナー & 友達追加ボタン -->
-        <div id="visiting-banner" class="hidden bg-amber-500/20 border border-amber-500/40 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-full bg-amber-500/30 flex items-center justify-center text-amber-400 text-lg">
-                    <i class="fa-solid fa-binoculars"></i>
+        <!-- 他人の部屋を訪問中の分かりやすい特設バナー -->
+        <div id="visiting-banner" class="hidden bg-gradient-to-r from-amber-600/30 via-orange-600/30 to-amber-600/30 border-2 border-amber-500 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-xl relative overflow-hidden">
+            <div class="absolute -right-6 -bottom-6 text-amber-500/10 text-8xl pointer-events-none">
+                <i class="fa-solid fa-binoculars"></i>
+            </div>
+            <div class="flex items-center space-x-4 relative z-10">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-xl shadow-lg shrink-0">
+                    <i class="fa-solid fa-eye"></i>
                 </div>
                 <div>
-                    <h3 class="text-sm font-bold text-amber-300"><span id="visiting-username"></span> さんのグルメ部屋を覗き見中</h3>
-                    <p class="text-xs text-dark-muted">気に入ったお店を自分の「行きたい」リストに保存できます！</p>
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-amber-500 text-gray-950 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">訪問中モード</span>
+                    </div>
+                    <h3 class="text-base sm:text-lg font-black text-amber-200 mt-0.5"><span id="visiting-username" class="text-white underline decoration-orange-400 decoration-2"></span> さんのグルメ部屋</h3>
+                    <p class="text-xs text-amber-100/80 mt-0.5">現在、友達のグルメ手帳を覗き見中です。気に入ったお店を自分の「行きたい」リストに保存できます！</p>
                 </div>
             </div>
-            <div class="flex items-center gap-2 w-full sm:w-auto">
+            <div class="flex items-center gap-2 w-full sm:w-auto relative z-10 shrink-0">
                 <button id="friend-toggle-btn" onclick="toggleFriendStatus()" class="flex-1 sm:flex-initial bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center space-x-1.5 shadow">
                     <i class="fa-solid fa-user-plus"></i>
                     <span>友達追加</span>
                 </button>
-                <button onclick="shareCurrentRoomUrl()" class="flex-1 sm:flex-initial bg-dark-input hover:bg-dark-border border border-dark-border text-white text-xs px-4 py-2.5 rounded-xl font-bold transition flex items-center justify-center space-x-1.5">
+                <button onclick="shareCurrentRoomUrl()" class="flex-1 sm:flex-initial bg-dark-card hover:bg-dark-input border border-dark-border text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center space-x-1.5 shadow">
                     <i class="fa-solid fa-share-nodes text-orange-400"></i>
                     <span>URL共有</span>
                 </button>
