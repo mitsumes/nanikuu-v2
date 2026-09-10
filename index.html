@@ -984,15 +984,11 @@
             getDatabaseRef().ref(`users/${activeUser}/shops`).on('value', (snapshot) => {
                 const data = snapshot.val();
                 allShops = [];
-                let visitedCount = 0;
-                let wantCount = 0;
 
                 if (data) {
                     Object.keys(data).forEach(key => {
                         const shop = { id: key, ...data[key] };
                         allShops.push(shop);
-                        if ((shop.listType || 'visited') === 'want') wantCount++;
-                        else visitedCount++;
                     });
                 }
                 
@@ -1005,28 +1001,25 @@
                                 if ((shop.listType || 'visited') === 'want') {
                                     if (!allShops.some(s => s.id === shop.id || s.name === shop.name)) {
                                         allShops.push(shop);
-                                        wantCount++;
                                     }
                                 }
                             });
                         }
-                        finalizeShopLoad(visitedCount, wantCount);
+                        finalizeShopLoad();
                     });
                 } else {
-                    finalizeShopLoad(visitedCount, wantCount);
+                    finalizeShopLoad();
                 }
             });
         }
 
-        function finalizeShopLoad(visitedCount, wantCount) {
+        function finalizeShopLoad() {
             allShops.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
-            document.getElementById('count-visited').textContent = visitedCount;
-            document.getElementById('count-want').textContent = wantCount;
 
             const spinner = document.getElementById('loading-spinner');
             if (spinner) spinner.classList.add('hidden');
 
+            updateTabCounts();
             filterShops();
             renderMarkers();
             renderTerritories();
@@ -1040,6 +1033,29 @@
                 }
                 justAddedShopId = null;
             }
+        }
+
+        function updateTabCounts() {
+            let visitedCount = 0;
+            let wantCount = 0;
+
+            allShops.forEach(shop => {
+                const listType = shop.listType || 'visited';
+                const itayoObj = shop.itayo || {};
+                const hasItayo = Object.values(itayoObj).some(name => name === currentUserName);
+
+                if (listType === 'visited' || hasItayo) {
+                    if (!(targetRoomUser && listType === 'want' && !hasItayo)) {
+                        visitedCount++;
+                    }
+                }
+                if (listType === 'want' && !hasItayo) {
+                    wantCount++;
+                }
+            });
+
+            document.getElementById('count-visited').textContent = visitedCount;
+            document.getElementById('count-want').textContent = wantCount;
         }
 
         function updateRoulettePrefOptions() {
@@ -1154,6 +1170,8 @@
                 const matchGenre = !genre || shop.genre === genre;
                 return matchTab && matchKeyword && matchGenre;
             });
+
+            updateTabCounts();
             renderShops(filtered);
         }
 
