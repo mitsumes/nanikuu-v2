@@ -123,7 +123,7 @@
                 <h1 class="text-base sm:text-lg font-bold tracking-wider">なにクウ？</h1>
             </div>
             <div class="flex items-center space-x-2">
-                <!-- 訪問中モード時のマイページに戻るボタン（すっきりした横長デザイン） -->
+                <!-- 訪問中モード時のマイページに戻るボタン -->
                 <button id="back-to-myroom-btn" onclick="goToMyRoom()" class="hidden bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white text-xs px-3 py-2 rounded-xl font-bold transition flex items-center space-x-1.5 shadow">
                     <i class="fa-solid fa-house"></i>
                     <span>マイ部屋へ戻る</span>
@@ -743,7 +743,8 @@
                 document.getElementById('header-mode-badge').textContent = 'マイページ';
                 document.getElementById('back-to-myroom-btn').classList.add('hidden');
                 if(visitHistoryBtn) visitHistoryBtn.classList.remove('hidden');
-                document.getElementById('add-shop-footer-btn').classList.remove('hidden');
+                document.getElementById('add-shop-footer-btn').classList.add('hidden'); // 修正: 自身の部屋では追加ボタンを表示
+                document.getElementById('add-shop-footer-btn').classList.remove('hidden'); 
                 
                 if(wantTabEl) wantTabEl.style.display = 'flex';
                 if(copyBtnText) copyBtnText.textContent = 'マイ部屋URL';
@@ -1065,10 +1066,10 @@
                 const hasItayo = Object.values(itayoObj).some(name => name === currentUserName);
                 
                 if (currentTab === 'visited') {
-                    if (targetRoomUser && isWant) return false;
+                    if (targetRoomUser && isWant) return (hasItayo);
                     return (shop.listType || 'visited') === 'visited' || hasItayo;
                 } else {
-                    return isWant && !hasItayo;
+                    return isWant;
                 }
             });
 
@@ -1103,10 +1104,6 @@
             cities.forEach(item => {
                 const cleanName = getCleanCityName(item.pref, item.city);
                 const shopsInCity = allShops.filter(s => {
-                    const isWant = (s.listType || 'visited') === 'want';
-                    const itayoObj = s.itayo || {};
-                    const hasItayo = Object.values(itayoObj).some(name => name === currentUserName);
-                    if (targetRoomUser && isWant && !hasItayo) return false;
                     return s.pref === item.pref && getCleanCityName(s.pref, s.city) === cleanName && s.lat && s.lng;
                 });
                 if (shopsInCity.length > 0) {
@@ -1121,13 +1118,7 @@
         }
 
         function updateExplorationCount() {
-            const validCount = allShops.filter(s => {
-                const isWant = (s.listType || 'visited') === 'want';
-                const itayoObj = s.itayo || {};
-                const hasItayo = Object.values(itayoObj).some(name => name === currentUserName);
-                if (targetRoomUser && isWant && !hasItayo) return false;
-                return s.lat && s.lng;
-            }).length;
+            const validCount = allShops.filter(s => s.lat && s.lng).length;
             const rateEl = document.getElementById('exploration-rate');
             if (rateEl) rateEl.textContent = `登録スポット: ${validCount}件`;
         }
@@ -1144,9 +1135,8 @@
                 let matchTab = false;
                 if (currentTab === 'visited') {
                     matchTab = (listType === 'visited' || hasItayo);
-                    if (targetRoomUser && listType === 'want' && !hasItayo) matchTab = false;
                 } else {
-                    matchTab = (listType === 'want' && !hasItayo);
+                    matchTab = (listType === 'want');
                 }
 
                 const matchKeyword = !keyword || 
@@ -1304,11 +1294,7 @@
         function getUniqueCities() {
             const citiesMap = {};
             allShops.forEach(shop => {
-                const listType = shop.listType || 'visited';
-                const itayoObj = shop.itayo || {};
-                const hasItayo = Object.values(itayoObj).some(name => name === currentUserName);
-                if (targetRoomUser && listType === 'want' && !hasItayo) return; 
-                if (shop.city && shop.pref) {
+                if (shop.city && shop.pref && shop.lat && shop.lng) {
                     const cleanName = getCleanCityName(shop.pref, shop.city);
                     const key = `${shop.pref}_${cleanName}`;
                     if (!citiesMap[key]) citiesMap[key] = { pref: shop.pref, city: cleanName };
