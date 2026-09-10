@@ -120,31 +120,31 @@
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-utensils text-orange-500 text-xl"></i>
-                <h1 class="text-lg font-bold tracking-wider">なにクウ？ <span id="header-mode-badge" class="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full border border-orange-500/30">マイページ</span></h1>
+                <h1 class="text-base sm:text-lg font-bold tracking-wider">なにクウ？</h1>
             </div>
             <div class="flex items-center space-x-2">
-                <!-- 訪問中モード時のマイページに戻るボタン -->
-                <button id="back-to-myroom-btn" onclick="goToMyRoom()" class="hidden bg-orange-600 hover:bg-orange-500 text-white text-xs px-3 py-1.5 rounded-full font-bold transition flex items-center space-x-1 shadow">
+                <!-- 訪問中モード時のマイページに戻るボタン（すっきりした横長デザイン） -->
+                <button id="back-to-myroom-btn" onclick="goToMyRoom()" class="hidden bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white text-xs px-3 py-2 rounded-xl font-bold transition flex items-center space-x-1.5 shadow">
                     <i class="fa-solid fa-house"></i>
                     <span>マイ部屋へ戻る</span>
                 </button>
 
                 <!-- 訪問履歴確認ボタン（マイ部屋のときのみ表示） -->
-                <button id="visit-history-btn" onclick="openVisitHistoryModal()" class="bg-dark-input hover:bg-dark-border border border-blue-500/40 text-blue-400 text-xs px-3 py-1.5 rounded-full font-bold transition flex items-center space-x-1 shadow" title="部屋の訪問履歴">
+                <button id="visit-history-btn" onclick="openVisitHistoryModal()" class="bg-dark-input hover:bg-dark-border border border-blue-500/40 text-blue-400 text-xs px-3 py-2 rounded-xl font-bold transition flex items-center space-x-1 shadow" title="部屋の訪問履歴">
                     <i class="fa-solid fa-shoe-prints"></i>
                     <span class="hidden sm:inline">訪問履歴</span>
                 </button>
 
                 <!-- マイ部屋のURLを一発でコピーするボタン -->
-                <button id="copy-myroom-btn" onclick="shareCurrentRoomUrl()" class="bg-dark-input hover:bg-dark-border border border-orange-500/40 text-orange-400 text-xs px-3 py-1.5 rounded-full font-bold transition flex items-center space-x-1 shadow" title="自分の部屋のURLをコピー">
+                <button id="copy-myroom-btn" onclick="shareCurrentRoomUrl()" class="bg-dark-input hover:bg-dark-border border border-orange-500/40 text-orange-400 text-xs px-3 py-2 rounded-xl font-bold transition flex items-center space-x-1 shadow" title="自分の部屋のURLをコピー">
                     <i class="fa-solid fa-share-nodes"></i>
-                    <span class="hidden sm:inline">マイ部屋URL</span>
+                    <span class="hidden sm:inline">URL</span>
                 </button>
 
-                <div class="flex items-center space-x-2 bg-dark-input px-3 py-1.5 rounded-full border border-dark-border text-sm">
+                <div class="flex items-center space-x-1.5 bg-dark-input px-2.5 py-1.5 rounded-xl border border-dark-border text-xs">
                     <i class="fa-solid fa-user text-orange-400"></i>
-                    <span id="display-username" class="font-medium max-w-[100px] truncate">ゲスト</span>
-                    <button onclick="changeUsername()" class="text-dark-muted hover:text-white transition"><i class="fa-solid fa-pen text-xs"></i></button>
+                    <span id="display-username" class="font-medium max-w-[80px] truncate">ゲスト</span>
+                    <button onclick="changeUsername()" class="text-dark-muted hover:text-white transition"><i class="fa-solid fa-pen text-[10px]"></i></button>
                 </div>
             </div>
         </div>
@@ -153,31 +153,28 @@
     <!-- メインコンテンツ -->
     <main class="max-w-4xl mx-auto px-4 py-6 space-y-6">
 
-        <!-- 他人の部屋を訪問中の分かりやすい特設バナー -->
-        <div id="visiting-banner" class="hidden bg-gradient-to-r from-amber-600/30 via-orange-600/30 to-amber-600/30 border-2 border-amber-500 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-xl relative overflow-hidden">
-            <div class="absolute -right-6 -bottom-6 text-amber-500/10 text-8xl pointer-events-none">
-                <i class="fa-solid fa-binoculars"></i>
-            </div>
-            <div class="flex items-center space-x-4 relative z-10">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-xl shadow-lg shrink-0">
-                    <i class="fa-solid fa-eye"></i>
+        <!-- 他人の部屋を訪問中のすっきり洗練されたバナー -->
+        <div id="visiting-banner" class="hidden bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/15 border border-amber-500/40 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-3 shadow-md">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 text-base shrink-0 border border-amber-500/30">
+                    <i class="fa-solid fa-binoculars"></i>
                 </div>
                 <div>
-                    <div class="flex items-center space-x-2">
-                        <span class="bg-amber-500 text-gray-950 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">訪問中モード</span>
+                    <div class="flex items-center space-x-1.5">
+                        <span class="text-[10px] bg-amber-500 text-gray-950 font-black px-2 py-0.5 rounded-full">訪問モード</span>
+                        <h3 class="text-sm font-bold text-white"><span id="visiting-username" class="text-amber-400 underline"></span> さんの部屋を覗き見中</h3>
                     </div>
-                    <h3 class="text-base sm:text-lg font-black text-amber-200 mt-0.5"><span id="visiting-username" class="text-white underline decoration-orange-400 decoration-2"></span> さんのグルメ部屋</h3>
-                    <p class="text-xs text-amber-100/80 mt-0.5">現在、友達のグルメ手帳を覗き見中です。気に入ったお店を自分の「行きたい」リストに保存できます！</p>
+                    <p class="text-[11px] text-dark-muted mt-0.5">気に入ったお店を自分の「行きたい」リストに保存できます。</p>
                 </div>
             </div>
-            <div class="flex items-center gap-2 w-full sm:w-auto relative z-10 shrink-0">
-                <button id="friend-toggle-btn" onclick="toggleFriendStatus()" class="flex-1 sm:flex-initial bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center space-x-1.5 shadow">
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <button id="friend-toggle-btn" onclick="toggleFriendStatus()" class="flex-1 sm:flex-initial bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center justify-center space-x-1 shadow">
                     <i class="fa-solid fa-user-plus"></i>
                     <span>友達追加</span>
                 </button>
-                <button onclick="shareCurrentRoomUrl()" class="flex-1 sm:flex-initial bg-dark-card hover:bg-dark-input border border-dark-border text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center space-x-1.5 shadow">
+                <button onclick="shareCurrentRoomUrl()" class="flex-1 sm:flex-initial bg-dark-input hover:bg-dark-border border border-dark-border text-white text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center justify-center space-x-1">
                     <i class="fa-solid fa-share-nodes text-orange-400"></i>
-                    <span>URL共有</span>
+                    <span>共有</span>
                 </button>
             </div>
         </div>
@@ -659,14 +656,12 @@
             return { name: "ご当地名物", desc: "地元で愛される自慢の味覚" };
         }
 
-        // 豪華なゴールドメダルデザインにアップグレードされたSVG生成関数
         function createCityNameMedalSvg(cleanCityName, width = 64, height = 64) {
             const specialty = getSpecialtyMedal(cleanCityName);
             let fontSize = cleanCityName.length >= 7 ? 11 : (cleanCityName.length >= 5 ? 13 : 15);
             return `
                 <svg width="${width}" height="${height}" viewBox="0 0 120 120" class="drop-shadow-lg">
                     <defs>
-                        <!-- 豪華なゴールドグラデーション -->
                         <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stop-color="#fff176" />
                             <stop offset="30%" stop-color="#fbc02d" />
@@ -683,24 +678,18 @@
                         </filter>
                     </defs>
 
-                    <!-- 外側の立体フリル・星の装飾 -->
                     <circle cx="60" cy="60" r="56" fill="url(#goldGradient)" stroke="#ffe082" stroke-width="2" filter="url(#glow)" />
                     <circle cx="60" cy="60" r="52" fill="#b7791f" />
                     <circle cx="60" cy="60" r="49" fill="url(#goldGradient)" />
 
-                    <!-- 上部のリボン飾り・星 -->
                     <polygon points="60,3 64,13 74,13 66,19 69,29 60,23 51,29 54,19 46,13 56,13" fill="#ffe082" stroke="#d97706" stroke-width="1" />
 
-                    <!-- 黒ベースの内側円盤 -->
                     <circle cx="60" cy="60" r="40" fill="url(#innerGradient)" stroke="#ffd700" stroke-width="2.5" />
 
-                    <!-- 市町村名 -->
                     <text x="60" y="52" fill="#ffffff" font-size="${fontSize}" font-weight="900" text-anchor="middle" dominant-baseline="central" style="letter-spacing: 0.5px; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">${escapeHtml(cleanCityName)}</text>
                     
-                    <!-- 区切りライン -->
                     <line x1="36" y1="64" x2="84" y2="64" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="2,2" />
 
-                    <!-- ご当地名物 -->
                     <text x="60" y="78" fill="#ffb74d" font-size="10" font-weight="bold" text-anchor="middle" dominant-baseline="central" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.9));">${escapeHtml(specialty.name)}</text>
                 </svg>
             `;
@@ -833,10 +822,10 @@
             if (!btn) return;
             if (friends.includes(username)) {
                 btn.innerHTML = '<i class="fa-solid fa-check"></i><span>友達登録済み</span>';
-                btn.className = "flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center space-x-1.5 shadow";
+                btn.className = "flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition flex items-center justify-center space-x-1 shadow";
             } else {
                 btn.innerHTML = '<i class="fa-solid fa-user-plus"></i><span>友達追加</span>';
-                btn.className = "flex-1 sm:flex-initial bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center space-x-1.5 shadow";
+                btn.className = "flex-1 sm:flex-initial bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition flex items-center justify-center space-x-1 shadow";
             }
         }
 
