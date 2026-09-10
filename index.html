@@ -712,7 +712,10 @@
             const splash = document.getElementById('splash-screen');
             if (splash) {
                 splash.style.opacity = '0';
-                setTimeout(() => { splash.style.display = 'none'; }, 700);
+                setTimeout(() => { 
+                    splash.style.display = 'none'; 
+                    if (map) { map.invalidateSize(); } // スプラッシュが消えた後にも地図サイズを再計算
+                }, 700);
             }
         }
 
@@ -743,7 +746,6 @@
                 document.getElementById('header-mode-badge').textContent = 'マイページ';
                 document.getElementById('back-to-myroom-btn').classList.add('hidden');
                 if(visitHistoryBtn) visitHistoryBtn.classList.remove('hidden');
-                document.getElementById('add-shop-footer-btn').classList.add('hidden'); // 修正: 自身の部屋では追加ボタンを表示
                 document.getElementById('add-shop-footer-btn').classList.remove('hidden'); 
                 
                 if(wantTabEl) wantTabEl.style.display = 'flex';
@@ -938,6 +940,11 @@
                 }).addTo(map);
                 territoryLayer.addTo(map);
                 markersLayer.addTo(map);
+
+                // 地図が正常に描画されるようサイズを強制再計算
+                setTimeout(() => {
+                    if (map) { map.invalidateSize(); }
+                }, 200);
             } catch (e) { console.error("Map init error:", e); }
         }
 
@@ -1035,6 +1042,11 @@
             renderTerritories();
             updateExplorationCount();
             updateRoulettePrefOptions();
+
+            // データ読み込み後にマップサイズを強制再計算して確実にタイルを表示させる
+            if (map) {
+                setTimeout(() => { map.invalidateSize(); }, 100);
+            }
 
             if (justAddedShopId) {
                 const targetShop = allShops.find(s => s.id === justAddedShopId);
@@ -1283,7 +1295,10 @@
             const shop = allShops.find(s => s.id === id);
             if (shop && shop.lat && shop.lng && map) {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                setTimeout(() => { map.flyTo([shop.lat, shop.lng], 16, { duration: 1.2 }); }, 300);
+                setTimeout(() => { 
+                    map.invalidateSize();
+                    map.flyTo([shop.lat, shop.lng], 16, { duration: 1.2 }); 
+                }, 300);
             }
         }
         function panToShopFromDetail() {
